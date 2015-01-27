@@ -60,16 +60,18 @@ class IterPublisher(object):
         socket.setsockopt_string(zmq.SUBSCRIBE, '')
         socket.connect("tcp://localhost:%s" % self.port)
         last_result = time.time()
+        result = ""
         while True:
             time.sleep(0.01)
-            result = socket.poll(timeout=1000)
-            if result == 0:
+            try:
+                result = socket.recv_string(flags=zmq.NOBLOCK)
+                last_result = time.time()
+            except zmq.ZMQError as err:
                 if time.time() - last_result > STREAM_TIMEOUT:
                     print("twitter connection timed out")
                     socket.close()
                     return
-            else:
-                last_result = time.time()
+
             sys.stdout.write("\rlast_result: %s at %s" % (result, str(last_result)))
             sys.stdout.flush()
 
@@ -77,19 +79,6 @@ class IterPublisher(object):
 if __name__ == "__main__":
     publisher = IterPublisher()
     publisher.run()
-    # context = zmq.Context()
-    # socket = context.socket(zmq.PUB)
-    # socket.bind("tcp://localhost:4999")
-
-    # for line in basic_twitter_stream_iter():
-    #     if line:
-    #         try:
-    #             tweet = json.loads(line)
-    #             if tweet.get('text'):
-    #                 msg = str(tweet.get('text'))
-    #                 socket.send(msg)
-    #         except ValueError:
-    #             continue
 
 
 # def main():
