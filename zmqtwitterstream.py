@@ -13,6 +13,7 @@ from twitterstream import twitter_stream_iter
 # exceptions:
 from urllib2 import HTTPError
 from socket import error as SocketError
+from requests.exceptions import ChunkedEncodingError
 
 STREAM_TIMEOUT = 90
 TWITTER_HTTP_MAX_BACKOFF = 320
@@ -68,24 +69,27 @@ class IterPublisher(object):
         except SocketServer as err:
             error_queue.put(dict(err))
             return
-        try:
-            for line in stream_session:
-                if line:
-                    try:
-                        tweet = json.loads(line)
-                        if tweet.get('warning'):
-                            error_queue.put(dict(tweet))
+        while True:
+            try:
+                for line in stream_session:
+                    if line:
+                        try:
+                            tweet = json.loads(line)
+                            if tweet.get('warning'):
+                                error_queue.put(dict(tweet))
+                                continue
+                            if tweet.get('disconnect'):
+                                error_queue.put(dict(tweet))
+                                continue
+                            if tweet.get('text'):
+                                # after checking contents, publish raw json
+                                socket.send_string(line)
+                        except ValueError:
                             continue
-                        if tweet.get('disconnect'):
-                            error_queue.put(dict(tweet))
-                            continue
-                        if tweet.get('text'):
-                            msg = tweet.get('text')
-                            socket.send_string(msg)
-                    except ValueError:
-                        continue
-        except KeyboardInterrupt:
-            return
+            except ChunkedEncodingError as err:
+                continue
+            except KeyboardInterrupt:
+                return
 
     def monitor(self):
         context = zmq.Context()
