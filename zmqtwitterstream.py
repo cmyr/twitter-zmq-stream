@@ -42,9 +42,15 @@ class IterPublisher(object):
                     args=(self.port, self.errors))
                 self.process.daemon = True
                 self.process.start()
-            self.monitor()
-            self.process.terminate()
-            self.process = None
+            try:
+                self.monitor()
+                self.process.terminate()
+                self.process = None
+            except KeyboardInterrupt as err:
+                print("\nclosing stream publisher")
+                break
+
+
 
     def start_publishing(self, port, error_queue):
         print("starting twitter connection on port %s" % port)
@@ -62,22 +68,24 @@ class IterPublisher(object):
         except SocketServer as err:
             error_queue.put(dict(err))
             return
-
-        for line in stream_session:
-            if line:
-                try:
-                    tweet = json.loads(line)
-                    if tweet.get('warning'):
-                        error_queue.put(dict(tweet))
+        try:
+            for line in stream_session:
+                if line:
+                    try:
+                        tweet = json.loads(line)
+                        if tweet.get('warning'):
+                            error_queue.put(dict(tweet))
+                            continue
+                        if tweet.get('disconnect'):
+                            error_queue.put(dict(tweet))
+                            continue
+                        if tweet.get('text'):
+                            msg = tweet.get('text')
+                            socket.send_string(msg)
+                    except ValueError:
                         continue
-                    if tweet.get('disconnect'):
-                        error_queue.put(dict(tweet))
-                        continue
-                    if tweet.get('text'):
-                        msg = tweet.get('text')
-                        socket.send_string(msg)
-                except ValueError:
-                    continue
+        except KeyboardInterrupt:
+            return
 
     def monitor(self):
         context = zmq.Context()
@@ -101,8 +109,7 @@ class IterPublisher(object):
                     socket.close()
                     return
 
-            sys.stdout.write("\rlast_result: %s at %s" %
-                             (result, str(last_result)))
+            sys.stdout.write("\rlast_result: %s" % str(last_result))
             sys.stdout.flush()
 
     def error(self):
