@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import sys
 import multiprocessing
+import Queue
 import zmq
 import json
 import time
@@ -29,11 +30,12 @@ class IterPublisher(object):
         self.port = port
         self.process = None
         self.backoff = None
-        self.errors = multiprocessing.Queue()
+        self.errors = None
 
     def run(self):
         while True:
             if self.process == None:
+                self.errors = multiprocessing.Queue()
                 self.process = multiprocessing.Process(
                     target=self.start_publishing,
                     args=(self.port, self.errors))
@@ -47,26 +49,32 @@ class IterPublisher(object):
     def start_publishing(self, port, error_queue):
         print("starting twitter connection on port %s" % port)
 
-        try:
-            stream_session = twitter_stream_iter()
-        except HTTPError as err:
-            error_queue.put(err.code)
-        except SocketServer as err:
-            error_queue.put(dict(err))
-        finally:
-            return
-
         context = zmq.Context()
         socket = context.socket(zmq.PUB)
         socket.set_hwm(100)
         socket.bind("tcp://127.0.0.1:%s" % port)
 
-        for line in basic_twitter_stream_iter():
+        try:
+            stream_session = twitter_stream_iter()
+        except HTTPError as err:
+            error_queue.put(err.code)
+            return
+        except SocketServer as err:
+            error_queue.put(dict(err))
+            return
+
+        for line in stream_session:
             if line:
                 try:
                     tweet = json.loads(line)
+                    if tweet.get('warning'):
+                        error_queue.put(dict(tweet))
+                        continue
+                    if tweet.get('disconnect'):
+                        error_queue.put(dict(tweet))
+                        continue
                     if tweet.get('text'):
-                        msg = str(tweet.get('text'))
+                        msg = tweet.get('text')
                         socket.send_string(msg)
                 except ValueError:
                     continue
@@ -80,17 +88,9 @@ class IterPublisher(object):
         result = ""
         while True:
             time.sleep(0.01)
-            try:
-                error = self.errors.get_nowait()
-                print("stream error: %s" % str(error))
-                if error in [400, 401, 403, 404, 405, 406, 407, 408, 410]:
-                    self.backoff_for_http()
-                if error == 420 or error.get('code') == 420:
-                    self.backoff = TWITTER_HTTP_MAX_BACKOFF
-                else:
-                    continue
-            except Queue.Empty:
-                continue
+            if self.error():
+                print('error break!')
+                break
             try:
                 result = socket.recv_string(flags=zmq.NOBLOCK)
                 last_result = time.time()
@@ -103,6 +103,22 @@ class IterPublisher(object):
 
             sys.stdout.write("\rlast_result: %s at %s" % (result, str(last_result)))
             sys.stdout.flush()
+
+    def error(self):
+        try:
+            error = self.errors.get_nowait()
+            print("stream error: %s" % str(error))
+            if error in [400, 401, 403, 404, 405, 406, 407, 408, 410]:
+                self.backoff_for_http()
+                return error
+            if error == 420 or error.get('code') == 420:
+                self.backoff = TWITTER_HTTP_MAX_BACKOFF
+                return error
+            else:
+                pass
+        except Queue.Empty:
+            pass
+
 
     def backoff_for_http(self):
         if self.backoff == None:
