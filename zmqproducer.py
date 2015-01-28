@@ -17,6 +17,7 @@ from socket import error as SocketError
 STREAM_TIMEOUT = 90
 TWITTER_HTTP_MAX_BACKOFF = 320
 
+
 class IterPublisher(object):
 
     """
@@ -44,7 +45,6 @@ class IterPublisher(object):
             self.monitor()
             self.process.terminate()
             self.process = None
-
 
     def start_publishing(self, port, error_queue):
         print("starting twitter connection on port %s" % port)
@@ -101,7 +101,8 @@ class IterPublisher(object):
                     socket.close()
                     return
 
-            sys.stdout.write("\rlast_result: %s at %s" % (result, str(last_result)))
+            sys.stdout.write("\rlast_result: %s at %s" %
+                             (result, str(last_result)))
             sys.stdout.flush()
 
     def error(self):
@@ -119,15 +120,12 @@ class IterPublisher(object):
         except Queue.Empty:
             pass
 
-
     def backoff_for_http(self):
         if self.backoff == None:
             self.backoff = 5
         else:
             self.backoff = min(self.backoff * 2, TWITTER_HTTP_MAX_BACKOFF)
 
-
-    
 
 if __name__ == "__main__":
     publisher = IterPublisher()
