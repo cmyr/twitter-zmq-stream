@@ -13,19 +13,29 @@ import logging
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.WARNING)
 
+
 class AnagramStream(object):
+
     """
     very basic single-purpose object for connecting to the streaming API
     in most use-cases python-twitter-tools or tweepy would be preferred
     BUT we need both gzip compression and the 'language' parameter
     """
-    def __init__(self, access_key, access_secret, consumer_key, consumer_secret):
+
+    def __init__(self,
+                 access_key,
+                 access_secret,
+                 consumer_key,
+                 consumer_secret):
         self._access_key = access_key
         self._access_secret = access_secret
         self._consumer_key = consumer_key
         self._consumer_secret = consumer_secret
 
-    def stream_iter(self, endpoint='sample', languages='None', stall_warnings=True):
+    def stream_iter(self,
+                    endpoint='sample',
+                    languages=None,
+                    stall_warnings=True):
         auth = OAuth1(self._access_key, self._access_secret,
                       self._consumer_key, self._consumer_secret)
 
@@ -45,8 +55,11 @@ class AnagramStream(object):
         if stall_warnings:
             query_params['stall_warnings'] = True
 
-        stream_connection = requests.get(url, auth=auth, stream=True,
-                                         params=query_params, headers=query_headers)
+        stream_connection = requests.get(url,
+                                         auth=auth,
+                                         stream=True,
+                                         params=query_params,
+                                         headers=query_headers)
         return stream_connection.iter_lines()
 
 
@@ -57,22 +70,9 @@ def twitter_stream_iter():
     stream_connection = anagram_stream.stream_iter()
     return stream_connection
 
-# def twitter_forwarder():
-#     anagram_stream = AnagramStream(CONSUMER_KEY, CONSUMER_SECRET,
-#                                    ACCESS_KEY, ACCESS_SECRET)
-
-#     stream_connection = anagram_stream.stream_iter()
-#     for line in stream_connection:
-#         if line:
-#             try:
-#                 tweet = json.loads(line)
-#                 if tweet.get('text'):
-#                     yield tweet.get('text')
-#             except ValueError:
-#                 continue 
 
 if __name__ == '__main__':
-    for line in basic_twitter_stream_iter():
+    for line in twitter_stream_iter():
         if line:
             try:
                 tweet = json.loads(line)
