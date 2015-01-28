@@ -63,11 +63,11 @@ class AnagramStream(object):
         return stream_connection.iter_lines()
 
 
-def twitter_stream_iter():
+def twitter_stream_iter(languages=None):
     anagram_stream = AnagramStream(CONSUMER_KEY, CONSUMER_SECRET,
                                    ACCESS_KEY, ACCESS_SECRET)
 
-    stream_connection = anagram_stream.stream_iter()
+    stream_connection = anagram_stream.stream_iter(languages=languages)
     return stream_connection
 
 
