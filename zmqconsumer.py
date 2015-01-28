@@ -11,7 +11,7 @@ def zmq_iter(host="localhost", port=8069):
     socket.connect("tcp://%s:%s" % (host, str(port)))
     while True:
         try:
-            yield socket.recv_string()
+            yield socket.recv_json()
         except KeyboardInterrupt as err:
             socket.close()
             context.term()
@@ -19,7 +19,7 @@ def zmq_iter(host="localhost", port=8069):
 
 def main():
     for msg in zmq_iter():
-        print(msg)
+        print(msg.get('text'))
 
 if __name__ == "__main__":
     main()
