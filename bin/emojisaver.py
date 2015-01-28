@@ -14,14 +14,14 @@ import gzip
 ITEMS_PER_FILE = 20000
 BASE_DIR = os.path.expanduser("~/twitter_data")
 
-def run():
+def run(host="localhost", port=8069):
     results = list()
     seen = 0
     saved = 0
     try:
-        for item in zmqstream.consumer.zmq_iter():
+        for item in zmqstream.consumer.zmq_iter(host, port):
             seen += 1
-            if tweet.get('retweeted_status'):
+            if item.get('retweeted_status'):
                 # skip retweets
                 continue
             if poetryutils2.filters.emoji_filter(item.get('text')):
@@ -65,13 +65,19 @@ def load():
             print(i.get('text'))
 
 def main():
-    run()
-    # load()
-    # import argparse
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('arg1', type=str, help="required argument")
-    # parser.add_argument('arg2', '--argument-2', help='optional boolean argument', action="store_true")
-    # args = parser.parse_args()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--hostname', type=str, default="localhost",
+                        help="publisher hostname")
+    parser.add_argument('-p', '--port', type=str, help="publisher port")
+    args = parser.parse_args()
+
+    funcargs = dict()
+    if args.hostname:
+        funcargs['host'] = args.hostname
+    if args.port:
+        funcargs['port'] = args.port
+    run(**funcargs)
 
 
 if __name__ == "__main__":
