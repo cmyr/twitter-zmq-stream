@@ -27,9 +27,10 @@ class IterPublisher(object):
     (for instance)
     """
 
-    def __init__(self, port=8069):
+    def __init__(self, hostname="127.0.0.1", port=8069):
         super(IterPublisher, self).__init__()
         self.port = port
+        self.hostname = hostname
         self.process = None
         self.backoff = None
         self.errors = None
@@ -40,7 +41,7 @@ class IterPublisher(object):
                 self.errors = multiprocessing.Queue()
                 self.process = multiprocessing.Process(
                     target=self.start_publishing,
-                    args=(self.port, self.errors))
+                    args=(self.hostname, self.port, self.errors))
                 self.process.daemon = True
                 self.process.start()
             try:
@@ -53,13 +54,13 @@ class IterPublisher(object):
 
 
 
-    def start_publishing(self, port, error_queue):
-        print("starting twitter connection on port %s" % port)
+    def start_publishing(self, host, port, error_queue):
+        print("publishing stream at %s:%s" % (host, port))
 
         context = zmq.Context()
         socket = context.socket(zmq.PUB)
         socket.set_hwm(100)
-        socket.bind("tcp://127.0.0.1:%s" % port)
+        socket.bind("tcp://%s:%s" % (str(host), str(port)))
 
         try:
             stream_session = twitter_stream_iter()
@@ -95,7 +96,7 @@ class IterPublisher(object):
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         socket.setsockopt_string(zmq.SUBSCRIBE, '')
-        socket.connect("tcp://localhost:%s" % self.port)
+        socket.connect("tcp://%s:%s" % (self.hostname, str(self.port)))
         last_result = time.time()
         result = ""
         while True:
@@ -139,7 +140,19 @@ class IterPublisher(object):
 
 
 def main():
-    publisher = IterPublisher()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--hostname', type=str, help="publisher hostname")
+    parser.add_argument('-p', '--port', type=str, help="publisher port")
+    args = parser.parse_args()
+
+    funcargs = dict()
+    if args.hostname:
+        funcargs['hostname'] = args.hostname
+    if args.port:
+        funcargs['port'] = args.port
+
+    publisher = IterPublisher(**funcargs)
     publisher.run()
 
 
