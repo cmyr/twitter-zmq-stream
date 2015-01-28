@@ -19,16 +19,16 @@ STREAM_TIMEOUT = 90
 TWITTER_HTTP_MAX_BACKOFF = 320
 
 
-class StreamPublisher(object):
+class TwitterStreamPublisher(object):
 
     """
-    StreamPublisher takes an iter and publishes it using ØMQ.
+    TwitterStreamPublisher takes an iter and publishes it using ØMQ.
     this is used for locally multicasting resources streamed from the WAN
     (for instance)
     """
 
     def __init__(self, hostname="127.0.0.1", port=8069):
-        super(StreamPublisher, self).__init__()
+        super(TwitterStreamPublisher, self).__init__()
         self.port = port
         self.hostname = hostname
         self.process = None
@@ -152,7 +152,7 @@ def main():
     if args.port:
         funcargs['port'] = args.port
 
-    publisher = StreamPublisher(**funcargs)
+    publisher = TwitterStreamPublisher(**funcargs)
     publisher.run()
 
 
