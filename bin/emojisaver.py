@@ -21,6 +21,9 @@ def run():
     try:
         for item in zmqstream.consumer.zmq_iter():
             seen += 1
+            if tweet.get('retweeted_status'):
+                # skip retweets
+                continue
             if poetryutils2.filters.emoji_filter(item.get('text')):
                 results.append({
                     'lang': item.get('lang'),
