@@ -29,6 +29,7 @@ class TwitterStreamPublisher(object):
 
     def __init__(self, hostname="127.0.0.1", port=8069):
         super(TwitterStreamPublisher, self).__init__()
+        self.activity_indicator = ActivityIndicator()
         self.port = port
         self.hostname = hostname
         self.process = None
@@ -97,6 +98,7 @@ class TwitterStreamPublisher(object):
         socket.connect("tcp://%s:%s" % (self.hostname, str(self.port)))
         last_result = time.time()
         result = ""
+        tick_count = 0
         while True:
             time.sleep(0.01)
             if self.error():
@@ -112,8 +114,12 @@ class TwitterStreamPublisher(object):
                     socket.close()
                     return
 
-            sys.stdout.write("\rlast_result: %s" % str(last_result))
-            sys.stdout.flush()
+            # we don't want to print every tick:
+            tick_count += 1
+            if tick_count >= 50:
+                sys.stdout.write(" publisher running: %s\r" % self.activity_indicator)
+                sys.stdout.flush()
+                tick_count = 0
 
     def error(self):
         try:
@@ -142,11 +148,32 @@ def print_error(error):
     warning = error.get('warning')
     if warning:
         print("%s: %s: %s" % (time.ctime(),
-                              warning.get("code")
+                              warning.get("code"),
                               warning.get("message")))
     else:
         print(error)
 
+
+class ActivityIndicator(object):
+    """docstring for ActivityIndicator"""
+    def __init__(self):
+        super(ActivityIndicator, self).__init__()
+        self.indicatorFrames = ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
+        self.index = 0
+
+    def __str__(self):
+        return self.next()
+
+    def next(self):
+        result = self.indicatorFrames[self.index]
+        self.index = (self.index + 1) % len(self.indicatorFrames)
+        return result
+
+    def tick(self):
+        sys.stdout.write("%s\r" % self.next())
+        sys.stdout.flush()
+
+        
 
 def main():
     import argparse
