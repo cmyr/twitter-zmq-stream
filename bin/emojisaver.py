@@ -11,7 +11,7 @@ import sys
 import os
 import gzip
 
-ITEMS_PER_FILE = 20000
+ITEMS_PER_FILE = 100000
 BASE_DIR = os.path.expanduser("~/twitter_data")
 VERBOSITY = 0
 
@@ -77,7 +77,7 @@ def recursive_load_dir(path):
     for f in files:
         abspath = os.path.join(path, f)
         if os.path.isdir(abspath):
-            items.extend(load_dir(abspath))
+            items.extend(recursive_load_dir(abspath))
         else:
             file_items = load_file(abspath)
             if file_items:
@@ -95,7 +95,7 @@ def lang_count(items):
 def lang_sort(dir_path, print_lang=None):
     from operator import itemgetter
     dprint("lang sorting %s" % dir_path)
-    all_items = load_dir(dir_path)
+    all_items = recursive_load_dir(dir_path)
     langs = lang_count(all_items)
     counts = [(l, len(i)) for l, i in langs.items()]
     counts.sort(key=lambda tup: tup[1], reverse=True)
