@@ -52,8 +52,6 @@ class TwitterStreamPublisher(object):
                 print("\nclosing stream publisher")
                 break
 
-
-
     def start_publishing(self, host, port, error_queue):
         print("publishing stream at %s:%s" % (host, port))
 
@@ -120,15 +118,16 @@ class TwitterStreamPublisher(object):
     def error(self):
         try:
             error = self.errors.get_nowait()
-            print("stream error: %s" % str(error))
             if error in [400, 401, 403, 404, 405, 406, 407, 408, 410]:
                 self.backoff_for_http()
+                print("backing off for error %d" % error)
                 return error
             if error == 420 or error.get('code') == 420:
+                print("backing off for error 420 ø_ø")
                 self.backoff = TWITTER_HTTP_MAX_BACKOFF
                 return error
             else:
-                pass
+                print_errror(erorr)
         except Queue.Empty:
             pass
 
@@ -139,10 +138,21 @@ class TwitterStreamPublisher(object):
             self.backoff = min(self.backoff * 2, TWITTER_HTTP_MAX_BACKOFF)
 
 
+def print_error(error):
+    warning = error.get('warning')
+    if warning:
+        print("%s: %s: %s" % (time.ctime(),
+                              warning.get("code")
+                              warning.get("message")))
+    else:
+        print(error)
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', '--hostname', type=str, help="publisher hostname")
+    parser.add_argument(
+        '-n', '--hostname', type=str, help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
     args = parser.parse_args()
 
