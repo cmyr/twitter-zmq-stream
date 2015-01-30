@@ -60,16 +60,24 @@ def dump(results):
     print('\nwrote %d items to %s' % (len(results), filename))
 
 
-def load_file(path):
+def load_file(path, item_filter=None):
     if path.endswith('gz'):
         items = json.loads(gzip.open(path, 'rb').read())
         dprint("loaded %d items from %s" % (len(items), path))
-        return items
+        if item_filter:
+            return [item_filter(i) for i in items]
+        else:
+            return items
     else:
         dprint("skipping file %s" % path)
 
+def iter_file(path, item_filter=None):
+    items = load_file(path, item_filter)
+    for i in items:
+        yield i
+    
 
-def recursive_load_dir(path):
+def recursive_load_dir(path, item_filter=None):
     dprint("loading dir %s" % path)
     items = list()
     files = os.listdir(path)
@@ -79,10 +87,24 @@ def recursive_load_dir(path):
         if os.path.isdir(abspath):
             items.extend(recursive_load_dir(abspath))
         else:
-            file_items = load_file(abspath)
+            file_items = load_file(abspath, item_filter)
             if file_items:
                 items.extend(file_items)
     return items
+
+def iter_dir(path, item_filter):
+    files = os.listdir(path)
+    dprint("iterating %s files" % "\n".join(files))
+    for f in files:
+        abspath = os.path.join(path, f)
+        if os.path.isdir(abspath):
+            iter_dir(abspath)
+        else:
+            for item in iter_file(abspath, item_filter):
+                try:
+                    yield item
+                except StopIteration:
+                    continue
 
 
 def lang_count(items):
@@ -92,7 +114,9 @@ def lang_count(items):
     return by_lang
 
 
-def lang_sort(dir_path, print_lang=None):
+def lang_sort(dir_path, print_lang=None, sample=False):
+    if not print_lang and not sample:
+        return efficient_count(dir_path)
     from operator import itemgetter
     dprint("lang sorting %s" % dir_path)
     all_items = recursive_load_dir(dir_path)
@@ -104,6 +128,10 @@ def lang_sort(dir_path, print_lang=None):
     for lang, items in counts:
         print("%s: %d" % (lang, items))
 
+    if sample:
+        for l, items in langs.items():
+            print(items[0])
+
     if print_lang:
         to_print = langs.get(print_lang)
         if to_print:
@@ -113,11 +141,23 @@ def lang_sort(dir_path, print_lang=None):
         else:
             dprint("found no lines to print")
 
+def efficient_count(dir_path):
+    from collections import Counter
+    dprint("\nefficient counting %s" % dir_path)
+    # all_items = recursive_load_dir(dir_path, lang_count_filter)
+    counts = Counter(iter_dir(dir_path, lang_count_filter))
+    for item, count in counts.most_common(100):
+        item = item + ":"
+        print("%s%d" % (item.ljust(5), count))
+
+
 
 def dprint(output):
     if VERBOSITY > 0:
         print(output)
 
+def lang_count_filter(inp):
+    return inp.get('lang')
 
 def main():
     import argparse
@@ -131,6 +171,11 @@ def main():
                         help="optional language code will be printed to stdout")
     parser.add_argument('-v', '--verbose',
                         action="store_true", help="display debug information")
+
+    parser.add_argument('-s', '--sample',
+                        action="store_true", help="with --lang-sort, \
+                        optionally prints one item from each language")
+    
     args = parser.parse_args()
 
     funcargs = dict()
@@ -139,7 +184,7 @@ def main():
         VERBOSITY = 1
 
     if args.lang_sort:
-        lang_sort(args.lang_sort, args.print_lang)
+        lang_sort(args.lang_sort, args.print_lang, args.sample)
         return
     if args.hostname:
         funcargs['host'] = args.hostname
