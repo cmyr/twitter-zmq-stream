@@ -92,13 +92,13 @@ def recursive_load_dir(path, item_filter=None):
                 items.extend(file_items)
     return items
 
-def iter_dir(path, item_filter):
+def iter_dir(path, item_filter=None):
     files = os.listdir(path)
     dprint("iterating %s files" % "\n".join(files))
     for f in files:
         abspath = os.path.join(path, f)
         if os.path.isdir(abspath):
-            iter_dir(abspath)
+            iter_dir(abspath, item_filter)
         else:
             for item in iter_file(abspath, item_filter):
                 try:
