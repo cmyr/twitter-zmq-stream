@@ -98,7 +98,11 @@ def iter_dir(path, item_filter=None):
     for f in files:
         abspath = os.path.join(path, f)
         if os.path.isdir(abspath):
-            iter_dir(abspath, item_filter)
+            for item in iter_dir(abspath, item_filter):
+                try:
+                    yield item
+                except StopIteration:
+                    continue
         else:
             for item in iter_file(abspath, item_filter):
                 try:
