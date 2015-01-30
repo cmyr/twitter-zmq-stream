@@ -21,10 +21,14 @@ def zmq_iter(host="localhost", port=8069):
 
 def main():
     import argparse
+    import json
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--hostname', type=str, default="localhost",
                         help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
+    parser.add_argument('-r', '--raw',
+                        action="store_true", help="output raw json")
     args = parser.parse_args()
 
     funcargs = dict()
@@ -32,8 +36,12 @@ def main():
         funcargs['host'] = args.hostname
     if args.port:
         funcargs['port'] = args.port
+
     for msg in zmq_iter(**funcargs):
-        print(msg.get('text'))
+        if args.raw:
+            print(json.dumps(msg))
+        else:
+            print(msg.get('text'))
 
 
 if __name__ == "__main__":
