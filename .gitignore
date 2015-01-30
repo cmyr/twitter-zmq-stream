@@ -1,2 +1,4 @@
 *.pyc
 twittercreds.py
+.DS_Store
+twitter_data
