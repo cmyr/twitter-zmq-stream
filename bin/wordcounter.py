@@ -10,7 +10,6 @@ import time
 import gzip
 
 BASE_DIR = os.path.expanduser("~/twitter_data/word_counts")
-ACTIVITY_FRAMES = ["ᗑ","ᗒ","ᗐ","ᗕ","ᗅ","ᗆ","ᗄ","ᗉ","ᗋ","ᗌ","ᗊ","ᗏ","ᐃ","ᐅ","ᐁ","ᐊ","ᐄ","ᐓ","ᐍ","ᐗ"]
 
 class WordCounter(object):
 
@@ -20,7 +19,7 @@ class WordCounter(object):
         super(WordCounter, self).__init__()
         self.counts = defaultdict(int)
         self.day = time.strftime("%d")
-        self.activity_indicator = zmqstream.util.ActivityIndicator(ACTIVITY_FRAMES)
+        self.activity_indicator = zmqstream.ActivityIndicator()
 
     def add(self, word):
         self.counts[word] += 1
@@ -100,24 +99,6 @@ def dump(results):
     with gzip.open(filepath, 'wb') as outFile:
         outFile.write(json.dumps(results))
 
-# class ActivityIndicator(object):
-#     """docstring for ActivityIndicator"""
-#     def __init__(self, frames=None):
-#         super(ActivityIndicator, self).__init__()
-#         self.indicatorFrames = frames or ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
-#         self.index = 0
-
-#     def __str__(self):
-#         return self.next()
-
-#     def next(self):
-#         result = self.indicatorFrames[self.index]
-#         self.index = (self.index + 1) % len(self.indicatorFrames)
-#         return result
-
-#     def tick(self):
-#         sys.stdout.write("%s\r" % self.next())
-#         sys.stdout.flush()
 
 def main():
     import argparse

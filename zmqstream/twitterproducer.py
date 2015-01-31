@@ -31,7 +31,8 @@ class TwitterStreamPublisher(object):
 
     def __init__(self, hostname="127.0.0.1", port=8069):
         super(TwitterStreamPublisher, self).__init__()
-        self.activity_indicator = ActivityIndicator()
+        self.activity_indicator = ActivityIndicator(
+            message="publisher running:")
         self.port = port
         self.hostname = hostname
         self.process = None
@@ -100,7 +101,6 @@ class TwitterStreamPublisher(object):
         socket.connect("tcp://%s:%s" % (self.hostname, str(self.port)))
         last_result = time.time()
         result = ""
-        tick_count = 0
         while True:
             time.sleep(0.01)
             if self.error():
@@ -116,12 +116,7 @@ class TwitterStreamPublisher(object):
                     socket.close()
                     return
 
-            # we don't want to print every tick:
-            tick_count += 1
-            if tick_count >= 50:
-                sys.stdout.write(" publisher running: %s\r" % self.activity_indicator)
-                sys.stdout.flush()
-                tick_count = 0
+            self.activity_indicator.tick()
 
     def error(self):
         try:
@@ -154,7 +149,7 @@ def print_error(error):
                               warning.get("message")))
     else:
         print(error)
-        
+
 
 def main():
     import argparse
