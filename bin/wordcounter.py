@@ -5,9 +5,11 @@ from __future__ import unicode_literals
 import zmqstream
 from collections import defaultdict
 import os
+import sys
+import time
 
 BASE_DIR = os.path.expanduser("~/twitter_data/word_counts")
-
+ACTIVITY_FRAMES = ["ᗑ","ᗒ","ᗐ","ᗕ","ᗅ","ᗆ","ᗄ","ᗉ","ᗋ","ᗌ","ᗊ","ᗏ","ᐃ","ᐅ","ᐁ","ᐊ","ᐄ","ᐓ","ᐍ","ᐗ"]
 
 class WordCounter(object):
 
@@ -17,6 +19,7 @@ class WordCounter(object):
         super(WordCounter, self).__init__()
         self.counts = defaultdict(int)
         self.day = time.strftime("%d")
+        self.activity_indicator = ActivityIndicator(ACTIVITY_FRAMES)
 
     def add(self, word):
         self.counts[word] += 1
@@ -27,12 +30,19 @@ class WordCounter(object):
 
     def run(self, host="localhost", port=8069):
         results = list()
-
+        tick_count = 0
         for item in zmqstream.consumer.zmq_iter(host, port):
             try:
                 item = self.filter_item(item)
                 if item:
                     self.save_if_needed()
+
+                    tick_count += 1
+                    if tick_count >= 50:
+                        sys.stdout.write(" publisher running: %s\r" % self.activity_indicator)
+                        sys.stdout.flush()
+                        tick_count = 0
+
                     words = item.get("text").split()
                     for word in self.filter_words(words):
                         self.add(word)
@@ -88,6 +98,24 @@ def dump(results):
     with gzip.open(filepath, 'wb') as outFile:
         outFile.write(json.dumps(results))
 
+class ActivityIndicator(object):
+    """docstring for ActivityIndicator"""
+    def __init__(self, frames=None):
+        super(ActivityIndicator, self).__init__()
+        self.indicatorFrames = frames or ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
+        self.index = 0
+
+    def __str__(self):
+        return self.next()
+
+    def next(self):
+        result = self.indicatorFrames[self.index]
+        self.index = (self.index + 1) % len(self.indicatorFrames)
+        return result
+
+    def tick(self):
+        sys.stdout.write("%s\r" % self.next())
+        sys.stdout.flush()
 
 def main():
     import argparse
@@ -95,6 +123,7 @@ def main():
     parser.add_argument('-n', '--hostname', type=str, default="localhost",
                         help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
+    args = parser.parse_args()
 
     funcargs = dict()
     if args.hostname:
@@ -108,3 +137,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

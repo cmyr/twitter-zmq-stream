@@ -156,9 +156,9 @@ def print_error(error):
 
 class ActivityIndicator(object):
     """docstring for ActivityIndicator"""
-    def __init__(self):
+    def __init__(self, frames=None):
         super(ActivityIndicator, self).__init__()
-        self.indicatorFrames = ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
+        self.indicatorFrames = frames or ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
         self.index = 0
 
     def __str__(self):
