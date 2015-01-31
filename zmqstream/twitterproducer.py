@@ -10,6 +10,8 @@ import json
 import time
 from twitterstream import twitter_stream_iter
 
+from util import ActivityIndicator
+
 # exceptions:
 from urllib2 import HTTPError
 from socket import error as SocketError
@@ -152,27 +154,6 @@ def print_error(error):
                               warning.get("message")))
     else:
         print(error)
-
-
-class ActivityIndicator(object):
-    """docstring for ActivityIndicator"""
-    def __init__(self, frames=None):
-        super(ActivityIndicator, self).__init__()
-        self.indicatorFrames = frames or ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
-        self.index = 0
-
-    def __str__(self):
-        return self.next()
-
-    def next(self):
-        result = self.indicatorFrames[self.index]
-        self.index = (self.index + 1) % len(self.indicatorFrames)
-        return result
-
-    def tick(self):
-        sys.stdout.write("%s\r" % self.next())
-        sys.stdout.flush()
-
         
 
 def main():
