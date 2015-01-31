@@ -20,7 +20,7 @@ class WordCounter(object):
         super(WordCounter, self).__init__()
         self.counts = defaultdict(int)
         self.day = time.strftime("%d")
-        self.activity_indicator = ActivityIndicator(ACTIVITY_FRAMES)
+        self.activity_indicator = zmqstream.util.ActivityIndicator(ACTIVITY_FRAMES)
 
     def add(self, word):
         self.counts[word] += 1
@@ -76,6 +76,7 @@ class WordCounter(object):
         # we include words if the first and last characters are alpha?
         word_list = [w for w in word_list if w[0].isalpha() and w[-1:].isalpha()]
         word_list = [w for w in word_list if not w.startswith("http://")]
+        word_list = [w for w in word_list if not w.startswith("https://")]
         return word_list
 
 
@@ -99,24 +100,24 @@ def dump(results):
     with gzip.open(filepath, 'wb') as outFile:
         outFile.write(json.dumps(results))
 
-class ActivityIndicator(object):
-    """docstring for ActivityIndicator"""
-    def __init__(self, frames=None):
-        super(ActivityIndicator, self).__init__()
-        self.indicatorFrames = frames or ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
-        self.index = 0
+# class ActivityIndicator(object):
+#     """docstring for ActivityIndicator"""
+#     def __init__(self, frames=None):
+#         super(ActivityIndicator, self).__init__()
+#         self.indicatorFrames = frames or ["_", ",", ".", "•","*", "°", "ˆ", "´", "`", "¨"]
+#         self.index = 0
 
-    def __str__(self):
-        return self.next()
+#     def __str__(self):
+#         return self.next()
 
-    def next(self):
-        result = self.indicatorFrames[self.index]
-        self.index = (self.index + 1) % len(self.indicatorFrames)
-        return result
+#     def next(self):
+#         result = self.indicatorFrames[self.index]
+#         self.index = (self.index + 1) % len(self.indicatorFrames)
+#         return result
 
-    def tick(self):
-        sys.stdout.write("%s\r" % self.next())
-        sys.stdout.flush()
+#     def tick(self):
+#         sys.stdout.write("%s\r" % self.next())
+#         sys.stdout.flush()
 
 def main():
     import argparse
