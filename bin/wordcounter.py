@@ -7,6 +7,7 @@ from collections import defaultdict
 import os
 import sys
 import time
+import gzip
 
 BASE_DIR = os.path.expanduser("~/twitter_data/word_counts")
 ACTIVITY_FRAMES = ["ᗑ","ᗒ","ᗐ","ᗕ","ᗅ","ᗆ","ᗄ","ᗉ","ᗋ","ᗌ","ᗊ","ᗏ","ᐃ","ᐅ","ᐁ","ᐊ","ᐄ","ᐓ","ᐍ","ᐗ"]
