@@ -90,14 +90,20 @@ def dump(results):
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--hostname', type=str, default="localhost",
+                        help="publisher hostname")
+    parser.add_argument('-p', '--port', type=str, help="publisher port")
+
+    funcargs = dict()
+    if args.hostname:
+        funcargs['host'] = args.hostname
+    if args.port:
+        funcargs['port'] = args.port
+    
     word_counter = WordCounter()
-    word_counter.run()
-    # import argparse
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('arg1', type=str, help="required argument")
-    # parser.add_argument('arg2', '--argument-2',
-    #                     help='optional boolean argument', action="store_true")
-    # args = parser.parse_args()
+    word_counter.run(**funcargs)
 
 
 if __name__ == "__main__":
