@@ -16,6 +16,7 @@ class WordCounter(object):
     def __init__(self):
         super(WordCounter, self).__init__()
         self.counts = defaultdict(int)
+        self.day = time.strftime("%d")
 
     def add(self, word):
         self.counts[word] += 1
@@ -26,25 +27,26 @@ class WordCounter(object):
 
     def run(self, host="localhost", port=8069):
         results = list()
-        seen = 0
-        saved = 0
-        
+
         for item in zmqstream.consumer.zmq_iter(host, port):
             try:
-                seen += 1
                 item = self.filter_item(item)
                 if item:
+                    self.save_if_needed()
                     words = item.get("text").split()
                     for word in self.filter_words(words):
                         self.add(word)
-
-
-
             except KeyboardInterrupt:
                 break
-        self.dump()
+        self.debug_print()
 
-    def dump(self):
+    def save_if_needed(self):
+        if self.day != time.strftime("%d"):
+            dump(self.counts)
+            self.counts = defaultdict(int)
+            self.day = time.strftime("%d")
+
+    def debug_print(self):
         to_print = sorted(self.counts.items(),
                           key=lambda tup: tup[1], reverse=True)
         for word, count in to_print:
