@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import gzip
+import json
 
 BASE_DIR = os.path.expanduser("~/twitter_data/word_counts")
 
