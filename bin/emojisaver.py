@@ -45,19 +45,25 @@ def run(host="localhost", port=8069):
 
 
 def dump(results):
-    writeDir = os.path.join(BASE_DIR,
+    write_dir = os.path.join(BASE_DIR,
                             time.strftime("%Y"),
                             time.strftime("%m"),
                             time.strftime("%d"))
 
-    if not os.path.exists(writeDir):
-        os.makedirs(writeDir)
+    create_if_not_exists(write_dir)
     filename = time.strftime("%H:%M:%S.txt.gz")
-    filepath = os.path.join(writeDir, filename)
-    with gzip.open(filepath, 'wb') as outFile:
-        outFile.write(json.dumps(results))
+    filepath = os.path.join(write_dir, filename)
+    write_json_to_gzip(filepath, results)
 
-    print('\nwrote %d items to %s' % (len(results), filename))
+def write_json_to_gzip(outfile, pyobj):
+    with gzip.open(outfile, 'wb') as writefile:
+        writefile.write(json.dumps(pyobj))
+    dprint('\nwrote %d items to %s' % (len(pyobj), outfile))
+
+
+def create_if_not_exists(newdir):
+    if not os.path.exists(newdir):
+        os.makedirs(newdir)
 
 
 def load_file(path, item_filter=None):
@@ -77,12 +83,15 @@ def iter_file(path, item_filter=None):
         yield i
     
 
-def recursive_load_dir(path, item_filter=None):
+def recursive_load_dir(path, item_filter=None, skip_dirs=["sorted"]):
     dprint("loading dir %s" % path)
     items = list()
     files = os.listdir(path)
     dprint("loading %s files" % "\n".join(files))
     for f in files:
+        if f in skip_dirs:
+            dprint("skipping %s" % f)
+            continue
         abspath = os.path.join(path, f)
         if os.path.isdir(abspath):
             items.extend(recursive_load_dir(abspath))
@@ -92,10 +101,12 @@ def recursive_load_dir(path, item_filter=None):
                 items.extend(file_items)
     return items
 
-def iter_dir(path, item_filter=None):
+def iter_dir(path, item_filter=None, skip_dirs=["sorted"]):
     files = os.listdir(path)
     dprint("iterating %s files" % "\n".join(files))
     for f in files:
+        if f in skip_dirs:
+            continue
         abspath = os.path.join(path, f)
         if os.path.isdir(abspath):
             for item in iter_dir(abspath, item_filter):
@@ -117,7 +128,7 @@ def lang_count(items):
         by_lang[i.get('lang')].append(i.get('text'))
     return by_lang
 
-
+"""sort of a bastard main() function, at this point. """
 def lang_sort(dir_path, print_lang=None, sample=False):
     if not print_lang and not sample:
         return efficient_count(dir_path)
@@ -148,11 +159,34 @@ def lang_sort(dir_path, print_lang=None, sample=False):
 def efficient_count(dir_path):
     from collections import Counter
     dprint("\nefficient counting %s" % dir_path)
-    # all_items = recursive_load_dir(dir_path, lang_count_filter)
     counts = Counter(iter_dir(dir_path, lang_count_filter))
     for item, count in counts.most_common(100):
         item = item + ":"
         print("%s%d" % (item.ljust(5), count))
+
+def lang_write(dir_path):
+    out_dir = "sorted"
+    all_items = recursive_load_dir(dir_path, skip_dirs=[out_dir])
+    langs = lang_count(all_items)
+    write_dir = os.path.join(dir_path, "sorted")
+    create_if_not_exists(write_dir)
+    for lang, items in langs.items():
+        filename = next_numbered_file(write_dir, lang)
+        write_json_to_gzip(filename, items)
+
+
+
+def next_numbered_file(dir_path, basename):
+    number_extension = 0
+    while True:
+        ext = "%d" % number_extension if number_extension else ""
+        nextname = os.path.join(dir_path, "%s%s.txt.gz" % (basename, ext))
+        if not os.path.exists(nextname):
+            dprint("next filename = %s" % nextname)
+            return nextname
+        number_extension += 1
+
+
 
 
 
