@@ -16,7 +16,7 @@ BASE_DIR = os.path.expanduser("~/twitter_data")
 VERBOSITY = 0
 
 
-def run(host="localhost", port=8069):
+def run(host="localhost", port=8069, file_length=ITEMS_PER_FILE):
     results = list()
     seen = 0
     saved = 0
@@ -29,10 +29,11 @@ def run(host="localhost", port=8069):
             if poetryutils2.filters.emoji_filter(item.get('text')):
                 results.append({
                     'lang': item.get('lang'),
-                    'text': item.get('text')
+                    'text': item.get('text'),
+                    'tweet_id': item.get('id_str')
                 })
                 saved += 1
-                if len(results) >= ITEMS_PER_FILE:
+                if len(results) >= file_length:
                     dump(results)
                     results = list()
 
@@ -203,13 +204,15 @@ def main():
     parser.add_argument('-n', '--hostname', type=str, default="localhost",
                         help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
+    parser.add_argument('--file-length', type=int, help="optional: size of write files")
     parser.add_argument(
         '--lang-sort', type=str, help="sort input directory by language")
     parser.add_argument('--print-lang', type=str,
                         help="optional language code will be printed to stdout")
     parser.add_argument('-v', '--verbose',
                         action="store_true", help="display debug information")
-
+    parser.add_argument('-w', '--write',
+                        action="store_true", help="sort and write files to disk by language")
     parser.add_argument('-s', '--sample',
                         action="store_true", help="with --lang-sort, \
                         optionally prints one item from each language")
@@ -222,12 +225,16 @@ def main():
         VERBOSITY = 1
 
     if args.lang_sort:
-        lang_sort(args.lang_sort, args.print_lang, args.sample)
-        return
+        if args.write:
+            return lang_write(args.lang_sort)    
+        return lang_sort(args.lang_sort, args.print_lang, args.sample)
+
     if args.hostname:
         funcargs['host'] = args.hostname
     if args.port:
         funcargs['port'] = args.port
+    if args.file_length:
+        funcargs['file_length'] = args.file_length
     run(**funcargs)
 
 
