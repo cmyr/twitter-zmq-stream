@@ -130,7 +130,7 @@ class TwitterStreamPublisher(object):
                 self.backoff = TWITTER_HTTP_MAX_BACKOFF
                 return error
             else:
-                print_errror(erorr)
+                print_error(erorr)
         except Queue.Empty:
             pass
 
