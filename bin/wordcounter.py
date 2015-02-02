@@ -31,18 +31,12 @@ class WordCounter(object):
 
     def run(self, host="localhost", port=8069):
         results = list()
-        tick_count = 0
         for item in zmqstream.consumer.zmq_iter(host, port):
             try:
                 item = self.filter_item(item)
                 if item:
                     self.save_if_needed()
-
-                    tick_count += 1
-                    if tick_count >= 50:
-                        sys.stdout.write(" publisher running: %s\r" % self.activity_indicator)
-                        sys.stdout.flush()
-                        tick_count = 0
+                    self.activity_indicator.tick()
 
                     words = item.get("text").split()
                     for word in self.filter_words(words):
