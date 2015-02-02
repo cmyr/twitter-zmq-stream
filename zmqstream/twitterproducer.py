@@ -29,7 +29,7 @@ class TwitterStreamPublisher(object):
     (for instance)
     """
 
-    def __init__(self, hostname="127.0.0.1", port=8069):
+    def __init__(self, hostname="127.0.0.1", port=8069, langs=None):
         super(TwitterStreamPublisher, self).__init__()
         self.activity_indicator = ActivityIndicator(
             message="publisher running:")
@@ -38,6 +38,7 @@ class TwitterStreamPublisher(object):
         self.process = None
         self.backoff = None
         self.errors = None
+        self.langs = langs
 
     def run(self):
         while True:
@@ -45,7 +46,7 @@ class TwitterStreamPublisher(object):
                 self.errors = multiprocessing.Queue()
                 self.process = multiprocessing.Process(
                     target=self.start_publishing,
-                    args=(self.hostname, self.port, self.errors))
+                    args=(self.hostname, self.port, self.langs, self.errors))
                 self.process.daemon = True
                 self.process.start()
             try:
@@ -56,7 +57,7 @@ class TwitterStreamPublisher(object):
                 print("\nclosing stream publisher")
                 break
 
-    def start_publishing(self, host, port, error_queue):
+    def start_publishing(self, host, port, langs, error_queue):
         print("publishing stream at %s:%s" % (host, port))
 
         context = zmq.Context()
@@ -65,7 +66,7 @@ class TwitterStreamPublisher(object):
         socket.bind("tcp://%s:%s" % (str(host), str(port)))
 
         try:
-            stream_session = twitter_stream_iter()
+            stream_session = twitter_stream_iter(langs)
         except HTTPError as err:
             error_queue.put(err.code)
             return
@@ -157,6 +158,8 @@ def main():
     parser.add_argument(
         '-n', '--hostname', type=str, help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
+    parser.add_argument('--langs', type=str, nargs='*', 
+        help="language codes to narrow scope of twitter stream")
     args = parser.parse_args()
 
     funcargs = dict()
@@ -164,6 +167,8 @@ def main():
         funcargs['hostname'] = args.hostname
     if args.port:
         funcargs['port'] = args.port
+    if args.langs:
+        funcargs['langs'] = args.langs
 
     publisher = TwitterStreamPublisher(**funcargs)
     publisher.run()
