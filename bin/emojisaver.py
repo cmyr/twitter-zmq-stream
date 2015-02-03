@@ -47,14 +47,15 @@ def run(host="localhost", port=8069, file_length=ITEMS_PER_FILE):
 
 def dump(results):
     write_dir = os.path.join(BASE_DIR,
-                            time.strftime("%Y"),
-                            time.strftime("%m"),
-                            time.strftime("%d"))
+                             time.strftime("%Y"),
+                             time.strftime("%m"),
+                             time.strftime("%d"))
 
     create_if_not_exists(write_dir)
     filename = time.strftime("%H:%M:%S.txt.gz")
     filepath = os.path.join(write_dir, filename)
     write_json_to_gzip(filepath, results)
+
 
 def write_json_to_gzip(outfile, pyobj):
     with gzip.open(outfile, 'wb') as writefile:
@@ -78,11 +79,12 @@ def load_file(path, item_filter=None):
     else:
         dprint("skipping file %s" % path)
 
+
 def iter_file(path, item_filter=None):
-    items = load_file(path, item_filter)
+    items = load_file(path, item_filter) or list()
     for i in items:
         yield i
-    
+
 
 def recursive_load_dir(path, item_filter=None, skip_dirs=["sorted"]):
     dprint("loading dir %s" % path)
@@ -101,6 +103,7 @@ def recursive_load_dir(path, item_filter=None, skip_dirs=["sorted"]):
             if file_items:
                 items.extend(file_items)
     return items
+
 
 def iter_dir(path, item_filter=None, skip_dirs=["sorted"]):
     files = os.listdir(path)
@@ -130,6 +133,8 @@ def lang_count(items):
     return by_lang
 
 """sort of a bastard main() function, at this point. """
+
+
 def lang_sort(dir_path, print_lang=None, sample=False):
     if not print_lang and not sample:
         return efficient_count(dir_path)
@@ -157,6 +162,7 @@ def lang_sort(dir_path, print_lang=None, sample=False):
         else:
             dprint("found no lines to print")
 
+
 def efficient_count(dir_path):
     from collections import Counter
     dprint("\nefficient counting %s" % dir_path)
@@ -165,6 +171,7 @@ def efficient_count(dir_path):
         lang = long_name(item)
         lang = lang + ":"
         print("%s%d" % (lang.ljust(15), count))
+
 
 def lang_write(dir_path):
     out_dir = "sorted"
@@ -175,7 +182,6 @@ def lang_write(dir_path):
     for lang, items in langs.items():
         filename = next_numbered_file(write_dir, lang)
         write_json_to_gzip(filename, items)
-
 
 
 def next_numbered_file(dir_path, basename):
@@ -189,89 +195,91 @@ def next_numbered_file(dir_path, basename):
         number_extension += 1
 
 
-
-
-
 def dprint(output):
     if VERBOSITY > 0:
         print(output)
+
 
 def lang_count_filter(inp):
     return inp.get('lang')
 
 
 lookup = {
-"af": "Afrikaans",
- "ar": "Arabic",
- "az": "Azerbaijani",
- "be": "Belarusian",
- "bg": "Bulgarian",
- "br": "Breton",
- "ca": "Catalan",
- "cs": "Czech",
- "cy": "Welsh",
- "da": "Danish",
- "de": "German",
- "el": "Greek",
- "en": "English",
- "eo": "Esperanto",
- "es": "Spanish",
- "et": "Estonian",
- "eu": "Basque",
- "fi": "Finnish",
- "fo": "Faeroese",
- "fr": "French",
- "fy": "Frisian",
- "ga": "Irish",
- "gd": "Scots Gaelic",
- "gv": "Manx",
- "he": "Hebrew",
- "hr": "Croatian",
- "hu": "Hungarian",
- "id": "Indonesian",
- "is": "Icelandic",
- "it": "Italian",
- "ja": "Japanese",
- "kl": "Greenlandic",
- "ku": "Kurdish",
- "la": "Latin",
- "lb": "Luxembourgish",
- "lt": "Lithuanian",
- "lv": "Latvian, Lettish",
- "mk": "Macedonian",
- "mt": "Maltese",
- "nl": "Dutch",
- "no": "Norwegian",
- "pl": "Polish",
- "pt": "Portuguese",
- "rm": "Rhaeto-Romance",
- "ro": "Romanian",
- "ru": "Russian",
- "se": "Northern Saami",
- "sk": "Slovak",
- "sl": "Slovenian",
- "so": "Somalian",
- "sq": "Albanian",
- "sr": "Serbian",
- "sv": "Swedish",
- "sw": "Swahili",
- "tr": "Turkish",
- "uk": "Ukrainian",
- "vi": "Vietnamese",
- "yi": "Yiddish",
- "zh": "Chinese"
+    "af": "Afrikaans",
+    "ar": "Arabic",
+    "az": "Azerbaijani",
+    "be": "Belarusian",
+    "bg": "Bulgarian",
+    "br": "Breton",
+    "ca": "Catalan",
+    "cs": "Czech",
+    "cy": "Welsh",
+    "da": "Danish",
+    "de": "German",
+    "el": "Greek",
+    "en": "English",
+    "eo": "Esperanto",
+    "es": "Spanish",
+    "et": "Estonian",
+    "eu": "Basque",
+    "fi": "Finnish",
+    "fo": "Faeroese",
+    "fr": "French",
+    "fy": "Frisian",
+    "ga": "Irish",
+    "gd": "Scots Gaelic",
+    "gv": "Manx",
+    "he": "Hebrew",
+    "hr": "Croatian",
+    "hu": "Hungarian",
+    "id": "Indonesian",
+    "is": "Icelandic",
+    "it": "Italian",
+    "ja": "Japanese",
+    "kl": "Greenlandic",
+    "ku": "Kurdish",
+    "la": "Latin",
+    "lb": "Luxembourgish",
+    "lt": "Lithuanian",
+    "lv": "Latvian",
+    "mk": "Macedonian",
+    "mt": "Maltese",
+    "nl": "Dutch",
+    "no": "Norwegian",
+    "pl": "Polish",
+    "pt": "Portuguese",
+    "rm": "Rhaeto-Romance",
+    "ro": "Romanian",
+    "ru": "Russian",
+    "se": "Northern Saami",
+    "sk": "Slovak",
+    "sl": "Slovenian",
+    "so": "Somalian",
+    "sq": "Albanian",
+    "sr": "Serbian",
+    "sv": "Swedish",
+    "sw": "Swahili",
+    "tr": "Turkish",
+    "uk": "Ukrainian",
+    "vi": "Vietnamese",
+    "yi": "Yiddish",
+    "zh": "Chinese",
+    "ko": "Korean"
 }
+
 
 def long_name(lang_code):
     return lookup.get(lang_code) or lang_code
-        
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--hostname', type=str, default="localhost",
                         help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
-    parser.add_argument('--file-length', type=int, help="optional: size of write files")
+    parser.add_argument(
+        '--file-length', type=int, help="optional: size of write files")
     parser.add_argument(
         '--lang-sort', type=str, help="sort input directory by language")
     parser.add_argument('--print-lang', type=str,
@@ -283,7 +291,7 @@ def main():
     parser.add_argument('-s', '--sample',
                         action="store_true", help="with --lang-sort, \
                         optionally prints one item from each language")
-    
+
     args = parser.parse_args()
 
     funcargs = dict()
@@ -293,7 +301,7 @@ def main():
 
     if args.lang_sort:
         if args.write:
-            return lang_write(args.lang_sort)    
+            return lang_write(args.lang_sort)
         return lang_sort(args.lang_sort, args.print_lang, args.sample)
 
     if args.hostname:
