@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import zmqstream
 import poetryutils2
+import twittertools
 from collections import defaultdict
 import json
 import time
@@ -168,7 +169,7 @@ def efficient_count(dir_path):
     dprint("\nefficient counting %s" % dir_path)
     counts = Counter(iter_dir(dir_path, lang_count_filter))
     for item, count in counts.most_common(100):
-        lang = long_name(item)
+        lang = twittertools.language_name(item)
         lang = lang + ":"
         print("%s%d" % (lang.ljust(15), count))
 
@@ -202,74 +203,6 @@ def dprint(output):
 
 def lang_count_filter(inp):
     return inp.get('lang')
-
-
-lookup = {
-    "af": "Afrikaans",
-    "ar": "Arabic",
-    "az": "Azerbaijani",
-    "be": "Belarusian",
-    "bg": "Bulgarian",
-    "br": "Breton",
-    "ca": "Catalan",
-    "cs": "Czech",
-    "cy": "Welsh",
-    "da": "Danish",
-    "de": "German",
-    "el": "Greek",
-    "en": "English",
-    "eo": "Esperanto",
-    "es": "Spanish",
-    "et": "Estonian",
-    "eu": "Basque",
-    "fi": "Finnish",
-    "fo": "Faeroese",
-    "fr": "French",
-    "fy": "Frisian",
-    "ga": "Irish",
-    "gd": "Scots Gaelic",
-    "gv": "Manx",
-    "he": "Hebrew",
-    "hr": "Croatian",
-    "hu": "Hungarian",
-    "id": "Indonesian",
-    "is": "Icelandic",
-    "it": "Italian",
-    "ja": "Japanese",
-    "kl": "Greenlandic",
-    "ku": "Kurdish",
-    "la": "Latin",
-    "lb": "Luxembourgish",
-    "lt": "Lithuanian",
-    "lv": "Latvian",
-    "mk": "Macedonian",
-    "mt": "Maltese",
-    "nl": "Dutch",
-    "no": "Norwegian",
-    "pl": "Polish",
-    "pt": "Portuguese",
-    "rm": "Rhaeto-Romance",
-    "ro": "Romanian",
-    "ru": "Russian",
-    "se": "Northern Saami",
-    "sk": "Slovak",
-    "sl": "Slovenian",
-    "so": "Somalian",
-    "sq": "Albanian",
-    "sr": "Serbian",
-    "sv": "Swedish",
-    "sw": "Swahili",
-    "tr": "Turkish",
-    "uk": "Ukrainian",
-    "vi": "Vietnamese",
-    "yi": "Yiddish",
-    "zh": "Chinese",
-    "ko": "Korean"
-}
-
-
-def long_name(lang_code):
-    return lookup.get(lang_code) or lang_code
 
 
 def main():
