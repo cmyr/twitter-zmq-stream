@@ -18,7 +18,7 @@ def tweet_filter(source_iter):
 def run(host="127.0.0.1", port="8069"):
     poet = poetry.Limericker()
     tweet_texts = tweet_filter(zmqstream.zmq_iter(host=host, port=port))
-    
+
     line_filters = [
     poetry.filters.numeral_filter,
     poetry.filters.ascii_filter,
@@ -27,12 +27,17 @@ def run(host="127.0.0.1", port="8069"):
     ]
 
     source = poetry.line_iter(tweet_texts, line_filters)
-    for poem in poet.generate_from_source(source):
+    for poem in poet.generate_from_source(iter_wrapper(source)):
         print(poem)
 
 
-
-
+def iter_wrapper(source_iter):
+    activity_indicator = zmqstream.ActivityIndicator()
+    for i in source_iter:
+        last_word = i.split()[-1]
+        activity_indicator.message = last_word
+        activity_indicator.tick()
+        yield i
 
 
 def main():
