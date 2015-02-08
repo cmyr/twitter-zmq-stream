@@ -41,6 +41,13 @@ def iter_wrapper(source_iter):
 
 
 def main():
+    try:
+        import setproctitle
+        setproctitle.setproctitle('limericker')
+    except ImportError:
+        print("missing module: setproctitle")
+
+
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--hostname', type=str, default="localhost",

@@ -164,7 +164,7 @@ def main():
         setproctitle.setproctitle('twit_producer')
     except ImportError:
         print("missing module: setproctitle")
-        pass
+
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
