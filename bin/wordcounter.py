@@ -96,6 +96,13 @@ def dump(results):
 
 
 def main():
+    try:
+        import setproctitle
+        setproctitle.setproctitle('word_counter')
+    except ImportError:
+        print("missing module: setproctitle")
+        pass
+
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--hostname', type=str, default="localhost",
