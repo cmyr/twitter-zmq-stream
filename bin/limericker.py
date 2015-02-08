@@ -28,7 +28,7 @@ def run(host="127.0.0.1", port="8069"):
 
     source = poetry.line_iter(tweet_texts, line_filters)
     for poem in poet.generate_from_source(iter_wrapper(source)):
-        print(poem)
+        print(poet.prettify(poem))
 
 
 def iter_wrapper(source_iter):
