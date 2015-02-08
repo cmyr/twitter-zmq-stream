@@ -59,6 +59,12 @@ class TwitterStreamPublisher(object):
 
     def start_publishing(self, host, port, langs, error_queue):
         print("publishing stream at %s:%s" % (host, port))
+        
+        try:
+            import setproctitle
+            setproctitle.setproctitle('twit_producer')
+        except ImportError:
+            print("missing module: setproctitle")
 
         context = zmq.Context()
         socket = context.socket(zmq.PUB)
@@ -153,6 +159,12 @@ def print_error(error):
 
 
 def main():
+    try:
+        import setproctitle
+        setproctitle.setproctitle('twit_producer')
+    except ImportError:
+        print("missing module: setproctitle")
+        pass
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
