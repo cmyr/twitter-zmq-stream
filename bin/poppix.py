@@ -74,7 +74,7 @@ def main():
         funcargs['port'] = args.port
 
     pp = PopPix()
-    pp.run()
+    pp.run(**funcargs)
 
 
 if __name__ == "__main__":
