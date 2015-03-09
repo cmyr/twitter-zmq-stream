@@ -28,15 +28,15 @@ class PopPix(object):
                     media = orig.get('entities').get('media')
                     rts = orig.get('retweet_count')
                     if media and rts > self.interest_threshold:
-                        media_url = media[0].get('media_url')
-                        self.seen[media_url] += 1
+                        # media_url = media[0].get('media_url')
+                        self.seen[orig.get('id_str')] += 1
                 else:
                     self.activity_indicator.tick()
                 # check our time
                 if time.time() - self.start_time > self.check_interval:
                     self.start_time = time.time()
                     most_pop = reduce(most_popular, self.seen.items())
-                    print("most pop: %s %d" % (most_pop[0], most_pop[1]))
+                    print("most pop: http://www.twitter.com/u/status/%s %d" % (most_pop[0], most_pop[1]))
                     self.seen = defaultdict(int)
 
 
