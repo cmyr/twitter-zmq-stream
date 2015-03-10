@@ -18,7 +18,7 @@ class PopPix(object):
         self.seen = defaultdict(int)
         self.interest_threshold = 10000
         self.start_time = time.time()
-        self.check_interval = 60 * 5  # seconds
+        self.check_interval = 60 * 30  # seconds
 
     def run(self, host="localhost", port=8069):
         for item in zmqstream.consumer.zmq_iter(host, port):
