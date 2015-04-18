@@ -57,7 +57,7 @@ def main():
     args = parser.parse_args()
 
     funcargs = dict()
-    args['debug'] = args.debug
+    funcargs['debug'] = args.debug
     if args.hostname:
         funcargs['host'] = args.hostname
     if args.port:
@@ -68,7 +68,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-    # coding: utf-8
-    from __future__ import print_function
-    from __future__ import unicode_literals
