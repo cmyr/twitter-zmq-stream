@@ -15,8 +15,8 @@ def tweet_filter(source_iter):
             yield item.get('text')
 
 
-def run(host="127.0.0.1", port="8069"):
-    poet = poetry.Limericker()
+def run(host="127.0.0.1", port="8069", debug=False):
+    poet = poetry.Limericker(debug)
     tweet_texts = tweet_filter(zmqstream.zmq_iter(host=host, port=port))
 
     line_filters = [
@@ -53,9 +53,11 @@ def main():
     parser.add_argument('-n', '--hostname', type=str, default="localhost",
                         help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
+    parser.add_argument('-v', '--verbose', help="print debug info", action="store_true")
     args = parser.parse_args()
 
     funcargs = dict()
+    args['debug'] = args.debug
     if args.hostname:
         funcargs['host'] = args.hostname
     if args.port:
@@ -65,3 +67,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+    # coding: utf-8
+    from __future__ import print_function
+    from __future__ import unicode_literals
