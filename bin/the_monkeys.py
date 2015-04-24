@@ -9,19 +9,49 @@ import time
 
 import zmqstream
 import re
+import os
 
-class MonkeyFinder(object):
+BASE_DIR = os.path.expanduser("~/twitter_data/monkeys")
+def dump(results):
+    writeDir = os.path.join(BASE_DIR,
+                            time.strftime("%Y"),
+                            time.strftime("%m"))
+
+    if not os.path.exists(writeDir):
+        os.makedirs(writeDir)
+    filename = time.strftime("%d.txt.gz")
+    filepath = os.path.join(writeDir, filename)
+    with gzip.open(filepath, 'wb') as outFile:
+        outFile.write(json.dumps(results))
+
+
+class StreamScanner(object):
     def __init__(self):
-        super(MonkeyFinder, self).__init__()
+        super(StreamScanner, self).__init__()
         self.activity_indicator = zmqstream.ActivityIndicator()
         self.regex = r'monkey.*shakespeare'
+        self.filepath = os.path.join(BASE_DIR, time.strftime("%b%d%H-%M-%S"))
 
     def run(self, host="localhost", port=8069):
         for item in zmqstream.consumer.zmq_iter(host, port):
             text = item.get('text')
             if self.check_text(text):
-                print(text)
+                # print(text)
+                self.write_line(item)
             self.activity_indicator.tick()
+
+    def write_line(self, tweet):
+        if not os.path.exists(self.filepath):
+            with open(self.filepath, 'w') as f:
+                pass
+
+        with open(os.path.join(BASE_DIR, self.filepath), 'a') as f:
+            u = tweet.get('user').get('screen_name')
+            i = tweet.get('id_str')
+            t = tweet.get('text')
+            line = u + i + t + "\n"
+            print(line)
+            f.write(line.encode('utf-8'))
 
 
     def check_text(self, text):
@@ -31,11 +61,11 @@ class MonkeyFinder(object):
 
 def test():
     strings = [
-    "the monkeys have arrived and they want to know where to put the shakespeare",
+    "the monkeys have arrived and they want to know where to put the shakespeare down",
     "the monkey wrote the Shakespeare",
     "the money shakes peirs"]
 
-    scanner = MonkeyFinder()
+    scanner = StreamScanner()
     results = [t for t in strings if scanner.check_text(t)]
     print(results)
 
@@ -62,7 +92,8 @@ def main():
     if args.port:
         funcargs['port'] = args.port
 
-    monkey = MonkeyFinder()
+    monkey = StreamScanner()
+    # monkey.regex = "hello"
     monkey.run(**funcargs)
 
 
