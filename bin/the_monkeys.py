@@ -12,25 +12,13 @@ import re
 import os
 
 BASE_DIR = os.path.expanduser("~/twitter_data/monkeys")
-def dump(results):
-    writeDir = os.path.join(BASE_DIR,
-                            time.strftime("%Y"),
-                            time.strftime("%m"))
-
-    if not os.path.exists(writeDir):
-        os.makedirs(writeDir)
-    filename = time.strftime("%d.txt.gz")
-    filepath = os.path.join(writeDir, filename)
-    with gzip.open(filepath, 'wb') as outFile:
-        outFile.write(json.dumps(results))
-
 
 class StreamScanner(object):
     def __init__(self):
         super(StreamScanner, self).__init__()
         self.activity_indicator = zmqstream.ActivityIndicator()
         self.regex = r'monkey.*shakespeare'
-        self.filepath = os.path.join(BASE_DIR, time.strftime("%b%d%H-%M-%S"))
+        self.filepath = os.path.join(BASE_DIR, time.strftime("%b%d-%H-%M-%S.txt"))
 
     def run(self, host="localhost", port=8069):
         for item in zmqstream.consumer.zmq_iter(host, port):
@@ -49,7 +37,7 @@ class StreamScanner(object):
             u = tweet.get('user').get('screen_name')
             i = tweet.get('id_str')
             t = tweet.get('text')
-            line = u + i + t + "\n"
+            line = " ".join([u + i + t + "\n"])
             print(line)
             f.write(line.encode('utf-8'))
 
