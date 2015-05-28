@@ -36,8 +36,8 @@ class StreamPublisher(object):
 
     """takes an iterator and broadcasts its items using ZMQ"""
 
-    def __init__(self, iterator, iter_kwargs={}, error_handler=None, 
-        timeout=90, hostname="127.0.0.1", port=8069):
+    def __init__(self, iterator, iter_kwargs={}, error_handler=None,
+                 timeout=90, hostname="127.0.0.1", port=8069):
         super(StreamPublisher, self).__init__()
         self.activity_indicator = ActivityIndicator(
             message="publisher running at %s:%d:" % (hostname, port))
@@ -87,11 +87,11 @@ class StreamPublisher(object):
         socket.bind("tcp://%s:%s" % (str(host), str(port)))
 
         try:
-            stream_session = iterator(**kwargs)
+            stream_session = iterator(kwargs)
         except HTTPError as err:
             error_queue.put(err.code)
             return
-        except SocketServer as err:
+        except SocketError as err:
             error_queue.put(dict(err))
             return
         while True:

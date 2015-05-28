@@ -10,7 +10,7 @@ from requests.exceptions import ChunkedEncodingError
 from zmqstream.publisher import (StreamPublisher, StreamResult,
                                  StreamResultError, StreamResultItem)
 from zmqstream.twittercreds import (CONSUMER_KEY, CONSUMER_SECRET,
-                              ACCESS_KEY, ACCESS_SECRET)
+                                    ACCESS_KEY, ACCESS_SECRET)
 
 
 class TwitterSampleStream(object):
@@ -62,11 +62,11 @@ class TwitterSampleStream(object):
         return stream_connection.iter_lines()
 
 
-def sample_stream_iter(languages=None):
+def sample_stream_iter(request_params):
     stream = TwitterSampleStream(CONSUMER_KEY, CONSUMER_SECRET,
-                                         ACCESS_KEY, ACCESS_SECRET)
+                                 ACCESS_KEY, ACCESS_SECRET)
 
-    stream_connection = stream.stream_iter(languages=languages)
+    stream_connection = stream.stream_iter(**request_params)
     while True:
         try:
             for line in stream_connection:
@@ -110,6 +110,7 @@ def test():
         else:
             print(line)
 
+
 def main():
     try:
         import setproctitle
@@ -123,7 +124,7 @@ def main():
         '-n', '--hostname', type=str, help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
     parser.add_argument('--langs', type=str, nargs='*',
-                        help="language codes to narrow scope of twitter stream")
+                        help="only include tweets with these language codes")
     args = parser.parse_args()
 
     func_kwargs = dict()
@@ -135,16 +136,12 @@ def main():
     if args.langs:
         iter_kwargs['languages'] = args.langs
 
-
-
     publisher = StreamPublisher(
-        iterator=sample_stream_iter, 
-        iter_kwargs=iter_kwargs, 
+        iterator=sample_stream_iter,
+        iter_kwargs=iter_kwargs,
         error_handler=twitter_error_handler,
         **func_kwargs)
     publisher.run()
-    return twitter_publisher()
-
 
 
 if __name__ == "__main__":
