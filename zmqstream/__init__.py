@@ -1,3 +1,3 @@
 from .consumer import zmq_iter
-from .twitterproducer import TwitterStreamPublisher
+from .publisher import StreamPublisher
 from .util import ActivityIndicator
