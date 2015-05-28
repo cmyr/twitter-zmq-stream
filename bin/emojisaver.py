@@ -196,6 +196,13 @@ def next_numbered_file(dir_path, basename):
         number_extension += 1
 
 
+def print_file(path):
+    for i in iter_file(path):
+        if i.get('lang') == 'en':
+            print(i.get('text'))
+    return 0
+
+
 def dprint(output):
     if VERBOSITY > 0:
         print(output)
@@ -231,6 +238,7 @@ def main():
     parser.add_argument('-s', '--sample',
                         action="store_true", help="with --lang-sort, \
                         optionally prints one item from each language")
+    parser.add_argument('-d', '--dump', type=str, help="dump file to stdout")
 
     args = parser.parse_args()
 
@@ -238,6 +246,9 @@ def main():
     if args.verbose:
         global VERBOSITY
         VERBOSITY = 1
+
+    if args.dump != None:
+        return print_file(args.dump)
 
     if args.lang_sort:
         if args.write:
