@@ -102,14 +102,6 @@ def twitter_error_handler(error, current_backoff):
         return TWITTER_HTTP_MAX_BACKOFF
 
 
-def twitter_publisher():
-    publisher = StreamPublisher(
-        iterator=sample_stream_iter, 
-        iter_kwargs={'languages': 'en'}, 
-        error_handler=twitter_error_handler)
-    publisher.run()
-
-
 def test():
     for line in sample_stream_iter('en'):
         if line.result_type == StreamResultItem:
@@ -125,25 +117,32 @@ def main():
     except ImportError:
         print("missing module: setproctitle")
 
-    # import argparse
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument(
-    #     '-n', '--hostname', type=str, help="publisher hostname")
-    # parser.add_argument('-p', '--port', type=str, help="publisher port")
-    # parser.add_argument('--langs', type=str, nargs='*',
-    #                     help="language codes to narrow scope of twitter stream")
-    # args = parser.parse_args()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-n', '--hostname', type=str, help="publisher hostname")
+    parser.add_argument('-p', '--port', type=str, help="publisher port")
+    parser.add_argument('--langs', type=str, nargs='*',
+                        help="language codes to narrow scope of twitter stream")
+    args = parser.parse_args()
 
-    # funcargs = dict()
-    # if args.hostname:
-    #     funcargs['hostname'] = args.hostname
-    # if args.port:
-    #     funcargs['port'] = args.port
-    # if args.langs:
-    #     funcargs['langs'] = args.langs
+    func_kwargs = dict()
+    iter_kwargs = dict()
+    if args.hostname:
+        func_kwargs['hostname'] = args.hostname
+    if args.port:
+        func_kwargs['port'] = args.port
+    if args.langs:
+        iter_kwargs['languages'] = args.langs
 
-    # publisher = TwitterStreamPublisher(**funcargs)
-    # publisher.run()
+
+
+    publisher = StreamPublisher(
+        iterator=sample_stream_iter, 
+        iter_kwargs=iter_kwargs, 
+        error_handler=twitter_error_handler,
+        **func_kwargs)
+    publisher.run()
     return twitter_publisher()
 
 
