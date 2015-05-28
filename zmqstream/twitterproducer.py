@@ -4,16 +4,25 @@ from __future__ import unicode_literals
 
 import sys
 import multiprocessing
-import Queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 import zmq
 import json
 import time
-from twitterstream import twitter_stream_iter
-
-from util import ActivityIndicator
+try:
+    from .twitterstream import (twitter_stream_iter, twitter_user_stream)
+    from .util import ActivityIndicator
+except ValueError:
+    from twitterstream import (twitter_stream_iter, twitter_user_stream)
+    from util import ActivityIndicator
 
 # exceptions:
-from urllib2 import HTTPError
+try:
+    from urllib2 import HTTPError
+except ImportError:
+    pass
 from socket import error as SocketError
 from requests.exceptions import ChunkedEncodingError
 
