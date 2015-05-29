@@ -13,28 +13,30 @@ from requests.exceptions import ChunkedEncodingError
 from twitter.stream import TwitterStream
 from twitter.oauth import OAuth
 
-from zmqstream.publisher import (StreamPublisher, StreamResult,
-                                 StreamResultError, StreamResultItem)
+from zmqstream.publisher import (StreamPublisher, StreamResult, 
+                                 StreamResultKeepAlive, StreamResultError,
+                                 StreamResultItem)
 
 
-def user_stream_iter(auth, request_params):
+def user_stream_iter(auth, request_kwargs):
     stream_connection = TwitterStream(
         auth=auth,
-        domain='userstream.twitter.com').user(**request_params)
+        timeout=30,
+        domain='userstream.twitter.com').user(**request_kwargs)
     while True:
         try:
             for tweet in stream_connection:
                 if tweet:
                     try:
-                        # tweet = json.loads(line)
                         if tweet.get('delete'):
                             continue
-                        if tweet.get('warning') or tweet.get('disconnect'):
+                        elif tweet.get('warning') or tweet.get('disconnect'):
                             yield StreamResult(StreamResultError, tweet)
                         elif tweet.get('text'):
                             yield StreamResult(StreamResultItem, tweet)
                         else:
                             print('unknown item:', tweet)
+                            yield StreamResult(StreamResultKeepAlive, 'keep-alive')
                     except ValueError:
                         continue
         except ChunkedEncodingError as err:
@@ -54,13 +56,6 @@ def twitter_error_handler(error, current_backoff):
     elif error == 420 or error.get('code') == 420:
         print("backing off for error 420 ø_ø")
         return TWITTER_HTTP_MAX_BACKOFF
-
-
-def twitter_publisher():
-    publisher = StreamPublisher(
-        iterator=user_stream_iter,
-        error_handler=twitter_error_handler)
-    publisher.run()
 
 
 def test():

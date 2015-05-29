@@ -30,7 +30,7 @@ DEFAULT_BACKOFF_TIME = 120
 StreamResult = namedtuple('StreamResult', ['result_type', 'value'])
 StreamResultError = 'StreamResultError'
 StreamResultItem = 'StreamResultItem'
-
+StreamResultKeepAlive = 'StreamResultKeepAlive'
 
 class StreamPublisher(object):
 
@@ -87,7 +87,7 @@ class StreamPublisher(object):
         socket.bind("tcp://%s:%s" % (str(host), str(port)))
 
         try:
-            stream_session = iterator(kwargs)
+            stream_session = iterator(request_kwargs=kwargs)
         except HTTPError as err:
             error_queue.put(err.code)
             return
@@ -102,6 +102,10 @@ class StreamPublisher(object):
                             error_queue.put(item.value)
                         elif item.result_type == StreamResultItem:
                             socket.send_string(json.dumps(item.value))
+                        elif item.result_type == StreamResultKeepAlive:
+                            socket.send_string(json.dumps(
+                                {'keep_alive': True}))
+
                     except ValueError:
                         print('value error with item:', item)
                         continue
