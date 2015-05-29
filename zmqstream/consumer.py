@@ -3,11 +3,34 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import zmq
+import zmq.auth
+import os
 
+def zmq_iter(host="localhost", port=8069, require_auth=False):
+    if require_auth:
+        keys_dir = os.path.expanduser('~/.zmqauth')
+        public_keys_dir = os.path.join(keys_dir, 'public_keys')
+        secret_keys_dir = os.path.join(keys_dir, 'private_keys')
+        if not (os.path.exists(keys_dir) and
+                os.path.exists(public_keys_dir) and
+                os.path.exists(secret_keys_dir)):
+                    print("Certificates are missing - run generate_certificates.py script first")
+                    sys.exit(1)
 
-def zmq_iter(host="localhost", port=8069):
+    
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
+    if require_auth:
+        client_secret_file = os.path.join(secret_keys_dir, "client.key_secret")
+        client_public, client_secret = zmq.auth.load_certificate(client_secret_file)
+        socket.curve_secretkey = client_secret
+        socket.curve_publickey = client_public
+
+        server_public_file = os.path.join(public_keys_dir, "server.key")
+        server_public, _ = zmq.auth.load_certificate(server_public_file)
+        # The client must know the server's public key to make a CURVE connection.
+        socket.curve_serverkey = server_public
+
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
     socket.connect("tcp://%s:%s" % (host, str(port)))
     while True:

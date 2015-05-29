@@ -4,12 +4,15 @@ from __future__ import unicode_literals
 
 import sys
 import multiprocessing
+import os
 
 try:
     import queue
 except ImportError:
     import Queue as queue
 import zmq
+import zmq.auth
+from zmq.auth.thread import ThreadAuthenticator
 import json
 import time
 from collections import namedtuple
@@ -32,12 +35,14 @@ StreamResultError = 'StreamResultError'
 StreamResultItem = 'StreamResultItem'
 StreamResultKeepAlive = 'StreamResultKeepAlive'
 
+
 class StreamPublisher(object):
 
     """takes an iterator and broadcasts its items using ZMQ"""
 
     def __init__(self, iterator, iter_kwargs={}, error_handler=None,
-                 timeout=90, hostname="127.0.0.1", port=8069):
+                 timeout=90, hostname="127.0.0.1", port=8069,
+                 require_auth=False):
         super(StreamPublisher, self).__init__()
         self.activity_indicator = ActivityIndicator(
             message="publisher running at %s:%d:" % (hostname, port))
@@ -49,6 +54,17 @@ class StreamPublisher(object):
         self.errors = None
         self.timeout = timeout
         self.backoff_time = 0
+        self.require_auth = require_auth
+        if require_auth:
+            self.keys_dir = os.path.expanduser('~/.zmqauth')
+            self.public_keys_dir = os.path.join(self.keys_dir, 'public_keys')
+            self.secret_keys_dir = os.path.join(self.keys_dir, 'private_keys')
+            if not (os.path.exists(self.keys_dir) and
+                    os.path.exists(self.public_keys_dir) and
+                    os.path.exists(self.secret_keys_dir)):
+                print(
+                    "Certificates are missing, will exit")
+                sys.exit(1)
 
     def run(self):
         while True:
@@ -82,7 +98,24 @@ class StreamPublisher(object):
             print("missing module: setproctitle")
 
         context = zmq.Context()
+
+        if self.require_auth:
+            auth = ThreadAuthenticator(context)
+            auth.start()
+            auth.allow('127.0.0.1')
+            auth.configure_curve(domain='*', location=zmq.auth.CURVE_ALLOW_ANY)
+
         socket = context.socket(zmq.PUB)
+
+        if self.require_auth:
+            server_secret_file = os.path.join(
+                self.secret_keys_dir, "server.key_secret")
+            server_public, server_secret = zmq.auth.load_certificate(
+                server_secret_file)
+            socket.curve_secretkey = server_secret
+            socket.curve_publickey = server_public
+            socket.curve_server = True  # must come before bind
+
         socket.set_hwm(100)
         socket.bind("tcp://%s:%s" % (str(host), str(port)))
 
@@ -115,6 +148,20 @@ class StreamPublisher(object):
     def monitor(self):
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
+        if self.require_auth:
+            client_secret_file = os.path.join(
+                self.secret_keys_dir, "client.key_secret")
+            client_public, client_secret = zmq.auth.load_certificate(
+                client_secret_file)
+            socket.curve_secretkey = client_secret
+            socket.curve_publickey = client_public
+
+            server_public_file = os.path.join(
+                self.public_keys_dir, "server.key")
+            server_public, _ = zmq.auth.load_certificate(server_public_file)
+            # The client must know the server's public key to make a CURVE
+            # connection.
+            socket.curve_serverkey = server_public
         socket.setsockopt_string(zmq.SUBSCRIBE, '')
         socket.connect("tcp://%s:%s" % (self.hostname, str(self.port)))
         last_result = time.time()

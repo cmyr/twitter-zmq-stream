@@ -117,6 +117,9 @@ def main():
     parser.add_argument(
         '-n', '--hostname', type=str, help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
+    parser.add_argument('--encrypt',
+                        help="require authorization to process stream",
+                        action="store_true")
     parser.add_argument('--langs', type=str, nargs='*',
                         help="only include tweets with these language codes")
     args = parser.parse_args()
@@ -124,6 +127,10 @@ def main():
     func_kwargs = dict()
     iter_kwargs = dict()
     if args.hostname:
+        if not args.encrypt:
+            print("WARNING: SENDING UNENCRYPTED STREAM WITH CUSTOM \
+HOSTNAME.\n ARE YOU DOING THIS ON PURPOSE?")
+            answ = raw_input("???:")
         func_kwargs['hostname'] = args.hostname
     if args.port:
         func_kwargs['port'] = args.port
