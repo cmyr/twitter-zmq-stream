@@ -121,6 +121,8 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        'auth', type=str, help="twitter auth token file")
+    parser.add_argument(
         '-n', '--hostname', type=str, help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
     parser.add_argument('--langs', type=str, nargs='*',
@@ -136,8 +138,14 @@ def main():
     if args.langs:
         iter_kwargs['languages'] = args.langs
 
+    credentials = load_auth(args.auth, raw=True)
+    print(credentials)
+    auth = OAuth1(*credentials)
+    print(auth)
+    iterator = functools.partial(sample_stream_iter, auth)
+
     publisher = StreamPublisher(
-        iterator=sample_stream_iter,
+        iterator=iterator,
         iter_kwargs=iter_kwargs,
         error_handler=twitter_error_handler,
         **func_kwargs)
