@@ -145,6 +145,7 @@ HOSTNAME.\n ARE YOU DOING THIS ON PURPOSE?")
         iterator=iterator,
         iter_kwargs=iter_kwargs,
         error_handler=twitter_error_handler,
+        require_auth=args.encrypt,
         **func_kwargs)
     publisher.run()
 

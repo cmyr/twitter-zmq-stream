@@ -13,13 +13,7 @@ except:
 def zmq_iter(host="localhost", port=8069, require_auth=False):
     if require_auth:
         public_keys_dir, secret_keys_dir = keys_dirs()
-        if not (os.path.exists(keys_dir) and
-                os.path.exists(public_keys_dir) and
-                os.path.exists(secret_keys_dir)):
-                    print("Certificates are missing - run generate_certificates.py script first")
-                    sys.exit(1)
 
-    
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     if require_auth:
@@ -56,9 +50,12 @@ def main():
     parser.add_argument('-p', '--port', type=str, help="publisher port")
     parser.add_argument('-r', '--raw',
                         action="store_true", help="output raw json")
+    parser.add_argument('--encrypt',
+                        help="require authorization to process stream",
+                        action="store_true")
     args = parser.parse_args()
 
-    funcargs = dict()
+    funcargs = {'require_auth': args.encrypt}
     if args.hostname:
         funcargs['host'] = args.hostname
     if args.port:
