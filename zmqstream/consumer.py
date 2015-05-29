@@ -43,7 +43,7 @@ def main():
         if args.raw:
             print(json.dumps(msg))
         else:
-            print(msg.get('text'))
+            print(msg.get('text').encode('utf-8'))
 
 
 if __name__ == "__main__":
