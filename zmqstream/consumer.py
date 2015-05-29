@@ -5,12 +5,14 @@ from __future__ import unicode_literals
 import zmq
 import zmq.auth
 import os
+try:
+    from .util import keys_dirs
+except:
+    from util import keys_dirs
 
 def zmq_iter(host="localhost", port=8069, require_auth=False):
     if require_auth:
-        keys_dir = os.path.expanduser('~/.zmqauth')
-        public_keys_dir = os.path.join(keys_dir, 'public_keys')
-        secret_keys_dir = os.path.join(keys_dir, 'private_keys')
+        public_keys_dir, secret_keys_dir = keys_dirs()
         if not (os.path.exists(keys_dir) and
                 os.path.exists(public_keys_dir) and
                 os.path.exists(secret_keys_dir)):

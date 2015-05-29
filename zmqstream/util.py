@@ -37,6 +37,18 @@ class ActivityIndicator(object):
             sys.stdout.flush()
 
 
+def keys_dirs():
+    """ returns paths to the public and secret key directories"""
+    keys_dir = os.path.expanduser('~/.zmqauth')
+    public_keys_dir = os.path.join(keys_dir, 'public_keys')
+    secret_keys_dir = os.path.join(keys_dir, 'private_keys')
+    if not (os.path.exists(keys_dir) and
+            os.path.exists(public_keys_dir) and
+            os.path.exists(secret_keys_dir)):
+        print(
+            "Certificates are missing, will exit")
+        sys.exit(1)
+    return (public_keys_dir, secret_keys_dir)
 
 
 def main():

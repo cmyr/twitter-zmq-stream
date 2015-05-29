@@ -35,6 +35,18 @@ StreamResultError = 'StreamResultError'
 StreamResultItem = 'StreamResultItem'
 StreamResultKeepAlive = 'StreamResultKeepAlive'
 
+def keys_dirs():
+    """ returns paths to the public and secret key directories"""
+    keys_dir = os.path.expanduser('~/.zmqauth')
+    public_keys_dir = os.path.join(keys_dir, 'public_keys')
+    secret_keys_dir = os.path.join(keys_dir, 'private_keys')
+    if not (os.path.exists(keys_dir) and
+            os.path.exists(public_keys_dir) and
+            os.path.exists(secret_keys_dir)):
+        print(
+            "Certificates are missing, will exit")
+        sys.exit(1)
+    return (public_keys_dir, secret_keys_dir)
 
 class StreamPublisher(object):
 
@@ -55,16 +67,6 @@ class StreamPublisher(object):
         self.timeout = timeout
         self.backoff_time = 0
         self.require_auth = require_auth
-        if require_auth:
-            self.keys_dir = os.path.expanduser('~/.zmqauth')
-            self.public_keys_dir = os.path.join(self.keys_dir, 'public_keys')
-            self.secret_keys_dir = os.path.join(self.keys_dir, 'private_keys')
-            if not (os.path.exists(self.keys_dir) and
-                    os.path.exists(self.public_keys_dir) and
-                    os.path.exists(self.secret_keys_dir)):
-                print(
-                    "Certificates are missing, will exit")
-                sys.exit(1)
 
     def run(self):
         while True:
@@ -108,8 +110,9 @@ class StreamPublisher(object):
         socket = context.socket(zmq.PUB)
 
         if self.require_auth:
+            _, secret_keys_dir = keys_dirs()
             server_secret_file = os.path.join(
-                self.secret_keys_dir, "server.key_secret")
+                secret_keys_dir, "server.key_secret")
             server_public, server_secret = zmq.auth.load_certificate(
                 server_secret_file)
             socket.curve_secretkey = server_secret
@@ -149,15 +152,16 @@ class StreamPublisher(object):
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         if self.require_auth:
+            public_keys_dir, secret_keys_dir = keys_dirs()
             client_secret_file = os.path.join(
-                self.secret_keys_dir, "client.key_secret")
+                secret_keys_dir, "client.key_secret")
             client_public, client_secret = zmq.auth.load_certificate(
                 client_secret_file)
             socket.curve_secretkey = client_secret
             socket.curve_publickey = client_public
 
             server_public_file = os.path.join(
-                self.public_keys_dir, "server.key")
+                public_keys_dir, "server.key")
             server_public, _ = zmq.auth.load_certificate(server_public_file)
             # The client must know the server's public key to make a CURVE
             # connection.
