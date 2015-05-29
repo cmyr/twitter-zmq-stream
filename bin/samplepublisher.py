@@ -5,12 +5,14 @@ from __future__ import unicode_literals
 import zmqstream
 import requests
 import json
+import functools
+
 from requests_oauthlib import OAuth1
 from requests.exceptions import ChunkedEncodingError
+
+from twittertools import load_auth
 from zmqstream.publisher import (StreamPublisher, StreamResult,
                                  StreamResultError, StreamResultItem)
-from zmqstream.twittercreds import (CONSUMER_KEY, CONSUMER_SECRET,
-                                    ACCESS_KEY, ACCESS_SECRET)
 
 
 class TwitterSampleStream(object):
@@ -21,22 +23,13 @@ class TwitterSampleStream(object):
     BUT we need both gzip compression and the 'language' parameter
     """
 
-    def __init__(self,
-                 access_key,
-                 access_secret,
-                 consumer_key,
-                 consumer_secret):
-        self._access_key = access_key
-        self._access_secret = access_secret
-        self._consumer_key = consumer_key
-        self._consumer_secret = consumer_secret
+    def __init__(self, auth):
+        self.auth = auth
 
     def stream_iter(self,
                     endpoint='sample',
                     languages=None,
                     stall_warnings=True):
-        auth = OAuth1(self._access_key, self._access_secret,
-                      self._consumer_key, self._consumer_secret)
 
         url = 'https://stream.twitter.com/1.1/statuses/%s.json' % endpoint
         query_headers = {'Accept-Encoding': 'deflate, gzip',
@@ -55,16 +48,15 @@ class TwitterSampleStream(object):
             query_params['stall_warnings'] = True
 
         stream_connection = requests.get(url,
-                                         auth=auth,
+                                         auth=self.auth,
                                          stream=True,
                                          params=query_params,
                                          headers=query_headers)
         return stream_connection.iter_lines()
 
 
-def sample_stream_iter(request_params):
-    stream = TwitterSampleStream(CONSUMER_KEY, CONSUMER_SECRET,
-                                 ACCESS_KEY, ACCESS_SECRET)
+def sample_stream_iter(auth, request_params):
+    stream = TwitterSampleStream(auth)
 
     stream_connection = stream.stream_iter(**request_params)
     while True:
@@ -139,9 +131,7 @@ def main():
         iter_kwargs['languages'] = args.langs
 
     credentials = load_auth(args.auth, raw=True)
-    print(credentials)
     auth = OAuth1(*credentials)
-    print(auth)
     iterator = functools.partial(sample_stream_iter, auth)
 
     publisher = StreamPublisher(
