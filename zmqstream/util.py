@@ -32,7 +32,8 @@ class ActivityIndicator(object):
     def tick(self):
         if time.time() - self.last_tick > self.min_interval:
             self.last_tick = time.time()
-            sys.stdout.write(" %s  %s\r" % (self.next(), self.message.ljust(35)))
+            message = " %s  %s\r" % (self.next(), self.message.ljust(35))
+            sys.stdout.write(message.encode('utf-8'))
             sys.stdout.flush()
 
 
