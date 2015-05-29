@@ -45,7 +45,8 @@ class StreamPublisher(object):
                  require_auth=False):
         super(StreamPublisher, self).__init__()
         self.activity_indicator = ActivityIndicator(
-            message="publisher running at %s:%d:" % (hostname, port))
+            message="publisher running at %s:%d; encrypted: %s" %
+            (hostname, port, str(require_auth)))
         self.iterator = iterator
         self.iter_kwargs = iter_kwargs
         self.hostname = hostname
