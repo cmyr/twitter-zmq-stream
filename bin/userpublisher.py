@@ -6,6 +6,9 @@ import zmqstream
 import requests
 import json
 
+import functools
+from twittertools import load_auth
+
 from requests.exceptions import ChunkedEncodingError
 from twitter.stream import TwitterStream
 from twitter.oauth import OAuth
@@ -13,25 +16,11 @@ from twitter.oauth import OAuth
 from zmqstream.publisher import (StreamPublisher, StreamResult,
                                  StreamResultError, StreamResultItem)
 
-from zmqstream.twittercreds import (CONSUMER_KEY, CONSUMER_SECRET,
-                                    ACCESS_KEY, ACCESS_SECRET,
-                                    P_ACCESS_KEY, P_ACCESS_SECRET,
-                                    P_CONSUMER_KEY, P_CONSUMER_SECRET)
 
-
-def twitter_user_stream(request_params):
-    # auth = OAuth(P_ACCESS_KEY, P_ACCESS_SECRET,
-    #              P_CONSUMER_KEY, P_CONSUMER_SECRET)
-    auth = OAuth(ACCESS_KEY, ACCESS_SECRET,
-                 CONSUMER_KEY, CONSUMER_SECRET)
-    print('starting user stream with params:, ', request_params)
-    return TwitterStream(
+def user_stream_iter(auth, request_params):
+    stream_connection = TwitterStream(
         auth=auth,
         domain='userstream.twitter.com').user(**request_params)
-
-
-def user_stream_iter(request_params):
-    stream_connection = twitter_user_stream(request_params)
     while True:
         try:
             for tweet in stream_connection:
@@ -94,6 +83,8 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        'auth', type=str, help="twitter auth token file")
+    parser.add_argument(
         '-n', '--hostname', type=str, help="publisher hostname")
     parser.add_argument('-p', '--port', type=str, help="publisher port")
     parser.add_argument('-a', '--all-replies',
@@ -115,8 +106,13 @@ def main():
     if args.user_only:
         iter_kwargs['with'] = 'user'
 
+    creds = load_auth(args.auth, raw=True)
+    # the OAuth object in the twitter module has different positional arguments
+    # then the requests OAuth module used in my own streaming implementation
+    auth = OAuth(creds[2], creds[3], creds[0], creds[1])
+    iterator = functools.partial(user_stream_iter, auth)
     publisher = StreamPublisher(
-        iterator=user_stream_iter,
+        iterator=iterator,
         iter_kwargs=iter_kwargs,
         error_handler=twitter_error_handler,
         **funcargs)
