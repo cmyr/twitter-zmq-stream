@@ -55,10 +55,10 @@ class TwitterSampleStream(object):
         return stream_connection.iter_lines()
 
 
-def sample_stream_iter(auth, request_params):
+def sample_stream_iter(auth, request_kwargs):
     stream = TwitterSampleStream(auth)
 
-    stream_connection = stream.stream_iter(**request_params)
+    stream_connection = stream.stream_iter(**request_kwargs)
     while True:
         try:
             for line in stream_connection:
