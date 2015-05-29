@@ -64,7 +64,7 @@ class StreamPublisher(object):
                 self.process = multiprocessing.Process(
                     target=self.start_publishing,
                     args=(self.iterator, self.iter_kwargs, self.hostname,
-                          self.port, self.errors))
+                          self.port, self.errors, self.require_auth))
                 self.process.daemon = True
                 self.process.start()
             try:
@@ -79,7 +79,7 @@ class StreamPublisher(object):
         self.process.terminate()
         self.process = None
 
-    def start_publishing(self, iterator, kwargs, host, port, error_queue):
+    def start_publishing(self, iterator, kwargs, host, port, error_queue, use_auth):
         print("publishing stream at %s:%s" % (host, port))
 
         try:
@@ -90,7 +90,7 @@ class StreamPublisher(object):
 
         context = zmq.Context()
 
-        if self.require_auth:
+        if use_auth:
             auth = ThreadAuthenticator(context)
             auth.start()
             auth.allow('127.0.0.1')
@@ -98,7 +98,7 @@ class StreamPublisher(object):
 
         socket = context.socket(zmq.PUB)
 
-        if self.require_auth:
+        if use_auth:
             _, secret_keys_dir = keys_dirs()
             server_secret_file = os.path.join(
                 secret_keys_dir, "server.key_secret")
