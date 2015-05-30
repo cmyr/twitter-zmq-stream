@@ -3,13 +3,19 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import zmq
+import zmq.ssh
 
 
-def zmq_iter(host="localhost", port=8069):
+
+def zmq_iter(host="localhost", port=8069, tunnel=True):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
-    socket.connect("tcp://%s:%s" % (host, str(port)))
+    socket_address = "tcp://%s:%s" % (host, str(port))
+    if tunnel:
+        zmq.ssh.tunnel_connection(socket, socket_address, "whitebook@h.cmyr.net:51416")
+    else:
+        socket.connect(socket_address)
     while True:
         try:
             result = socket.recv_json()
