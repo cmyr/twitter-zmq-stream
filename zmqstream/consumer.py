@@ -7,13 +7,13 @@ import zmq.ssh
 
 
 
-def zmq_iter(host="localhost", port=8069, tunnel=True):
+def zmq_iter(host="localhost", port=8069, tunnel=None):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
     socket_address = "tcp://%s:%s" % (host, str(port))
     if tunnel:
-        zmq.ssh.tunnel_connection(socket, socket_address, "whitebook@h.cmyr.net:51416")
+        zmq.ssh.tunnel_connection(socket, socket_address, tunnel)
     else:
         socket.connect(socket_address)
     while True:
@@ -37,6 +37,7 @@ def main():
     parser.add_argument('-p', '--port', type=str, help="publisher port")
     parser.add_argument('-r', '--raw',
                         action="store_true", help="output raw json")
+    parser.add_argument('-t', '--tunnel', type=str, help="sever for tunneling over ssh")
     args = parser.parse_args()
 
     funcargs = dict()
@@ -44,6 +45,8 @@ def main():
         funcargs['host'] = args.hostname
     if args.port:
         funcargs['port'] = args.port
+    if args.tunnel:
+        funcargs['tunnel'] = args.tunnel
 
     for msg in zmq_iter(**funcargs):
         if args.raw:
