@@ -81,6 +81,7 @@ class StreamPublisher(object):
         except ImportError:
             print("missing module: setproctitle")
 
+
         context = zmq.Context()
         socket = context.socket(zmq.PUB)
         socket.set_hwm(100)
@@ -111,6 +112,10 @@ class StreamPublisher(object):
                         continue
             except KeyboardInterrupt:
                 break
+            except Exception as err:
+                print("UNHANDLED EXCEPTION", err)
+                error_queue.put(err)
+
 
     def monitor(self):
         context = zmq.Context()
@@ -135,9 +140,12 @@ class StreamPublisher(object):
                     socket.close()
                     return
 
+
     def handle_errors(self):
         try:
             error = self.errors.get_nowait()
+            if isinstance(error, Exception):
+                raise error
             if self.error_handler:
                 self.backoff_time = self.error_handler(
                     error, self.backoff_time)
