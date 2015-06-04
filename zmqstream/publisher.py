@@ -17,11 +17,14 @@ from collections import namedtuple
 from .util import ActivityIndicator
 
 # exceptions:
-from httplib import IncompleteRead
+try:
+    from httplib import IncompleteRead
+except ImportError:
+    from http.client import IncompleteRead
 try:
     from urllib2 import HTTPError
 except ImportError:
-    pass
+    from urllib.error import HTTPError
 from socket import error as SocketError
 
 
