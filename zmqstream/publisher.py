@@ -17,6 +17,7 @@ from collections import namedtuple
 from .util import ActivityIndicator
 
 # exceptions:
+from httplib import IncompleteRead
 try:
     from urllib2 import HTTPError
 except ImportError:
@@ -112,6 +113,9 @@ class StreamPublisher(object):
                         continue
             except KeyboardInterrupt:
                 break
+            except IncompleteRead:
+                print('caught incomplete read')
+                continue
             except Exception as err:
                 print("UNHANDLED EXCEPTION", err)
                 error_queue.put(err)
