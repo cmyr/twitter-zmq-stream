@@ -51,6 +51,7 @@ class StreamPublisher(object):
         self.port = port
         self.process = None
         self.errors = None
+        self.error_handler = error_handler
         self.timeout = timeout
         self.backoff_time = 0
 
