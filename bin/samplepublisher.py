@@ -92,6 +92,9 @@ def twitter_error_handler(error, current_backoff):
     elif error == 420 or error.get('code') == 420:
         print("backing off for error 420 ø_ø")
         return TWITTER_HTTP_MAX_BACKOFF
+    else: 
+        print('handling unexpected error %s' % error)
+        return TWITTER_HTTP_MAX_BACKOFF
 
 
 def test():
