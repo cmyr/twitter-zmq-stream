@@ -27,6 +27,7 @@ except ImportError:
     from urllib.error import HTTPError
 from socket import error as SocketError
 
+from requests.exceptions import ConnectionError
 
 DEFAULT_BACKOFF_TIME = 120
 
@@ -162,6 +163,10 @@ class StreamPublisher(object):
             return error
         except queue.Empty:
             pass
+        except ConnectionError as err:
+            print(err)
+            self.backoff_time = DEFAULT_BACKOFF_TIME
+            return err # break to restart connection
 
 
 def main():
