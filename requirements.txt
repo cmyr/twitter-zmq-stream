@@ -1,0 +1,4 @@
+
+pyzmq>=15.2.0
+twittertools>=0.1
+requests-oauthlib>=0.6.0
