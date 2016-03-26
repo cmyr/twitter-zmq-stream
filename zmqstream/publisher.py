@@ -2,7 +2,6 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys
 import multiprocessing
 
 try:
@@ -37,6 +36,7 @@ StreamResultError = 'StreamResultError'
 StreamResultItem = 'StreamResultItem'
 StreamResultKeepAlive = 'StreamResultKeepAlive'
 
+
 class StreamPublisher(object):
 
     """takes an iterator and broadcasts its items using ZMQ"""
@@ -58,7 +58,7 @@ class StreamPublisher(object):
 
     def run(self):
         while True:
-            if self.process == None:
+            if self.process is None:
                 self.errors = multiprocessing.Queue()
                 self.process = multiprocessing.Process(
                     target=self.start_publishing,
@@ -71,7 +71,7 @@ class StreamPublisher(object):
                 self.process.terminate()
                 self.process = None
                 time.sleep(self.backoff_time)
-            except KeyboardInterrupt as err:
+            except KeyboardInterrupt:
                 print("\nclosing stream publisher")
                 break
 
@@ -86,7 +86,6 @@ class StreamPublisher(object):
             setproctitle.setproctitle('zmqproducer')
         except ImportError:
             print("missing module: setproctitle")
-
 
         context = zmq.Context()
         socket = context.socket(zmq.PUB)
@@ -125,30 +124,28 @@ class StreamPublisher(object):
                 print("UNHANDLED EXCEPTION", err)
                 error_queue.put(err)
 
-
     def monitor(self):
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         socket.setsockopt_string(zmq.SUBSCRIBE, '')
         socket.connect("tcp://%s:%s" % (self.hostname, str(self.port)))
         last_result = time.time()
-        result = ""
         while True:
             time.sleep(0.01)
-            if self.handle_errors():
-                print('error break!')
+            error = self.handle_errors()
+            if error:
+                print('error break!', error, sep='\n')
                 break
             try:
-                result = socket.recv_string(flags=zmq.NOBLOCK)
+                socket.recv_string(flags=zmq.NOBLOCK)
                 self.activity_indicator.tick()
                 last_result = time.time()
                 self.backoff_time = 0
-            except zmq.ZMQError as err:
+            except zmq.ZMQError:
                 if time.time() - last_result > self.timeout:
                     print("stream connection timed out")
                     socket.close()
                     return
-
 
     def handle_errors(self):
         try:
@@ -166,7 +163,7 @@ class StreamPublisher(object):
         except ConnectionError as err:
             print(err)
             self.backoff_time = DEFAULT_BACKOFF_TIME
-            return err # break to restart connection
+            return err  # break to restart connection
 
 
 def main():

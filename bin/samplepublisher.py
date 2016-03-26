@@ -52,18 +52,18 @@ class TwitterSampleStream(object):
                                          stream=True,
                                          params=query_params,
                                          headers=query_headers)
-        return stream_connection.iter_lines()
+        return stream_connection.iter_lines(decode_unicode=True)
 
 
 def sample_stream_iter(auth, request_kwargs):
     stream = TwitterSampleStream(auth)
-
     stream_connection = stream.stream_iter(**request_kwargs)
     while True:
         try:
             for line in stream_connection:
                 if line:
                     try:
+                        line = line.decode('utf-8')
                         tweet = json.loads(line)
                         if tweet.get('delete'):
                             continue
@@ -75,7 +75,7 @@ def sample_stream_iter(auth, request_kwargs):
                             print('unknown item:', tweet)
                     except ValueError:
                         continue
-        except ChunkedEncodingError as err:
+        except ChunkedEncodingError:
             continue
         except KeyboardInterrupt:
             return
@@ -92,13 +92,13 @@ def twitter_error_handler(error, current_backoff):
     elif error == 420 or error.get('code') == 420:
         print("backing off for error 420 ø_ø")
         return TWITTER_HTTP_MAX_BACKOFF
-    else: 
+    else:
         print('handling unexpected error %s' % error)
         return TWITTER_HTTP_MAX_BACKOFF
 
 
-def test():
-    for line in sample_stream_iter('en'):
+def test(auth, **kwargs):
+    for line in sample_stream_iter(auth, kwargs):
         if line.result_type == StreamResultItem:
             text = line.value.get('text')
             print(text or line or "no line?")
@@ -122,6 +122,7 @@ def main():
     parser.add_argument('-p', '--port', type=str, help="publisher port")
     parser.add_argument('--langs', type=str, nargs='*',
                         help="only include tweets with these language codes")
+    parser.add_argument('--test', action='store_true', help='test streaming')
     args = parser.parse_args()
 
     func_kwargs = dict()
@@ -133,8 +134,11 @@ def main():
     if args.langs:
         iter_kwargs['languages'] = args.langs
 
-    credentials = load_auth(args.auth, raw=True)
-    auth = OAuth1(*credentials)
+    creds = load_auth(args.auth, raw=True)
+    auth = OAuth1(*creds)
+    if args.test:
+        return test(auth, languages=args.langs)
+
     iterator = functools.partial(sample_stream_iter, auth)
 
     publisher = StreamPublisher(

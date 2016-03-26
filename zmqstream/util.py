@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import sys
 import time
 
+
 class ActivityIndicator(object):
     BULLET_FRAMES = ["■","◆","✦","★","✶","✷","✹","✺","◉","◎","◦","●","∙"]
     LINE_FRAMES = ["_","⎽","⎼","⎻","⎺","⎻","⎼","⎽"]
@@ -20,7 +21,6 @@ class ActivityIndicator(object):
         self.index = 0
         self.last_tick = time.time()
 
-
     def __str__(self):
         return self.next()
 
@@ -33,14 +33,11 @@ class ActivityIndicator(object):
         if time.time() - self.last_tick > self.min_interval:
             self.last_tick = time.time()
             message = " %s  %s\r" % (self.next(), self.message.ljust(35))
-            sys.stdout.write(message.encode('utf-8'))
+            sys.stdout.write(message)
             sys.stdout.flush()
 
 
-
-
 def main():
-
     activity_indicator = ActivityIndicator(ActivityIndicator.LINE_FRAMES)
     while True:
         activity_indicator.tick()
