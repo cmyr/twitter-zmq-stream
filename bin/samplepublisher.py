@@ -58,6 +58,8 @@ class TwitterSampleStream(object):
 def sample_stream_iter(auth, request_kwargs):
     stream = TwitterSampleStream(auth)
     stream_connection = stream.stream_iter(**request_kwargs)
+    seen = set()
+    dupes = 0
     while True:
         try:
             for line in stream_connection:
@@ -70,6 +72,17 @@ def sample_stream_iter(auth, request_kwargs):
                         if tweet.get('warning') or tweet.get('disconnect'):
                             yield StreamResult(StreamResultError, tweet)
                         elif tweet.get('text'):
+                            tweet_id = int(tweet.get('id_str'))
+                            if tweet_id in seen:
+                                dupes += 1
+                                continue
+                            else:
+                                seen.add(tweet_id)
+                                if len(seen) > 100000:
+                                    seen = set(sorted(seen)[-10000:])
+                                    if dupes:
+                                        print('skipped %d dupes\n' % dupes)
+                                        dupes = 0
                             yield StreamResult(StreamResultItem, tweet)
                         else:
                             print('unknown item:', tweet)

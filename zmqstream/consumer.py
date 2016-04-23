@@ -6,7 +6,6 @@ import zmq
 import zmq.ssh
 
 
-
 def zmq_iter(host="localhost", port=8069, tunnel=None):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
@@ -21,7 +20,7 @@ def zmq_iter(host="localhost", port=8069, tunnel=None):
             result = socket.recv_json()
             if isinstance(result, dict):
                 yield result
-        except KeyboardInterrupt as err:
+        except KeyboardInterrupt:
             socket.close()
             context.term()
             break
